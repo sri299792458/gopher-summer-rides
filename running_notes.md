@@ -53,3 +53,10 @@ Route geometry is approximate waypoint geometry for planning and visualization, 
 - GitHub Pages URL: https://sri299792458.github.io/gopher-summer-rides/
 - Pages source: `master` branch, repository root.
 - Verified live site in browser on May 7, 2026 with no fresh console warnings or errors.
+
+## Next build pass
+
+- User asked to use multiple agents for ideation and continue building.
+- In progress: calendar export, copyable group-chat ride text, selected-route map search, and clearer live-link copying.
+- Agent ideas integrated in this pass: full-summer `.ics` export, route-specific deep links, copyable ride text and route links, week theme labels, achievement badges, focus-visible styling, tab keyboard navigation, `noopener` on external links, and visible route verification dates.
+- Deferred ideas: RSVP/availability grid, richer route metadata filters, PWA/offline mode, progress import/export, and map stop markers.

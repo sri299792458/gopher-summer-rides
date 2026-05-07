@@ -16,6 +16,16 @@ The local dataset lives in `data/dataset.js`.
 
 Primary sources include Minneapolis Park and Recreation Board, Three Rivers Park District, Dakota County Parks, Minnesota DNR, and OpenStreetMap attribution for the basemap.
 
+## Features
+
+- 36 distinct summer rides with a Tue/Thu/Sat rhythm.
+- Interactive route sketch map.
+- Vibe and energy filters.
+- Per-browser completion tracking.
+- Group-chat copy text for each ride.
+- `.ics` calendar export for the full summer plan.
+- Official status/source links and route caveats.
+
 ## Run Locally
 
 ```powershell

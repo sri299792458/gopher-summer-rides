@@ -53,7 +53,7 @@
               <div class="meter-track"><div id="meterFill"></div></div>
             </div>
           </div>
-          <div class="ride-stack" id="weekRides"></div>
+          <div class="ride-stack" id="weekRides" aria-live="polite"></div>
         </section>
 
         <nav class="tab-list" role="tablist" aria-label="Planner views">
@@ -79,12 +79,18 @@
           <section class="tab-panel is-active" id="schedulePanel" role="tabpanel" aria-labelledby="scheduleTab" aria-label="Full summer schedule">
             <div class="panel-title-row">
               <h2>36 unique rides</h2>
-              <button class="text-button" id="resetButton" type="button">Reset done</button>
+              <div class="button-row">
+                <button class="text-button" id="downloadCalendarButton" type="button">
+                  <i data-lucide="calendar-plus"></i>
+                  Calendar
+                </button>
+                <button class="text-button" id="resetButton" type="button">Reset done</button>
+              </div>
             </div>
-            <div class="schedule-list" id="scheduleList"></div>
+            <div class="schedule-list" id="scheduleList" aria-live="polite"></div>
           </section>
 
-          <section class="tab-panel" id="routesPanel" role="tabpanel" aria-labelledby="routesTab" aria-label="Route library">
+          <section class="tab-panel" id="routesPanel" role="tabpanel" aria-labelledby="routesTab" aria-label="Route library" hidden>
             <div class="panel-title-row">
               <h2>Route library</h2>
               <span id="routeCount"></span>
@@ -96,10 +102,10 @@
               <button class="filter-chip" type="button" data-vibe="green" aria-pressed="false">Green</button>
               <button class="filter-chip" type="button" data-vibe="destination" aria-pressed="false">Destination</button>
             </div>
-            <div class="route-list" id="routeList"></div>
+            <div class="route-list" id="routeList" aria-live="polite"></div>
           </section>
 
-          <section class="tab-panel" id="crewPanel" role="tabpanel" aria-labelledby="crewTab" aria-label="Crew dashboard">
+          <section class="tab-panel" id="crewPanel" role="tabpanel" aria-labelledby="crewTab" aria-label="Crew dashboard" hidden>
             <div class="panel-title-row">
               <h2>Crew board</h2>
               <span id="doneCount"></span>
@@ -132,25 +138,35 @@
                 <span class="stat-label">longest ride</span>
               </div>
             </div>
+            <div class="achievement-list" id="achievementList" aria-label="Summer achievements"></div>
             <div class="source-block">
               <h3>Check before rolling</h3>
-              <a href="https://www.minneapolisparks.org/parks-destinations/trails-parkways/" target="_blank" rel="noreferrer">Minneapolis trails</a>
-              <a href="https://www.threeriversparks.org/page/three-rivers-activity-status" target="_blank" rel="noreferrer">Three Rivers status</a>
-              <a href="https://www.co.dakota.mn.us/parks/parksTrails/BigRivers" target="_blank" rel="noreferrer">Big Rivers updates</a>
-              <a href="https://www.dnr.state.mn.us/state_trails/luce_line/index.html" target="_blank" rel="noreferrer">Luce Line DNR</a>
+              <a href="https://www.minneapolisparks.org/parks-destinations/trails-parkways/" target="_blank" rel="noopener noreferrer">Minneapolis trails</a>
+              <a href="https://www.threeriversparks.org/page/three-rivers-activity-status" target="_blank" rel="noopener noreferrer">Three Rivers status</a>
+              <a href="https://www.co.dakota.mn.us/parks/parksTrails/BigRivers" target="_blank" rel="noopener noreferrer">Big Rivers updates</a>
+              <a href="https://www.dnr.state.mn.us/state_trails/luce_line/index.html" target="_blank" rel="noopener noreferrer">Luce Line DNR</a>
             </div>
           </section>
 
-          <section class="tab-panel" id="sharePanel" role="tabpanel" aria-labelledby="shareTab" aria-label="Sharing options">
+          <section class="tab-panel" id="sharePanel" role="tabpanel" aria-labelledby="shareTab" aria-label="Sharing options" hidden>
             <div class="panel-title-row">
               <h2>Share the planner</h2>
               <span>send a real link</span>
             </div>
             <div class="share-grid">
               <article class="share-card share-card-primary">
+                <h3>Live app link</h3>
+                <p>This is the URL to send your group chat.</p>
+                <code>https://sri299792458.github.io/gopher-summer-rides/</code>
+                <button class="inline-action" id="copyLiveLinkButton" type="button">
+                  <i data-lucide="copy"></i>
+                  Copy link
+                </button>
+              </article>
+              <article class="share-card share-card-primary">
                 <h3>Public share link</h3>
                 <p>Put this project in a GitHub repo, turn on Pages, and send your friends the Pages URL. That link works from anywhere.</p>
-                <code>Settings &gt; Pages &gt; Deploy from branch &gt; master &gt; /root</code>
+                <code>Settings &gt; Pages &gt; Deploy from branch &gt; main or master &gt; /root</code>
               </article>
               <article class="share-card">
                 <h3>Fast option: Netlify Drop</h3>
@@ -186,9 +202,10 @@
             <span><i data-lucide="gauge"></i><strong id="selectedEnergy">Easy</strong></span>
           </div>
         </div>
-        <div class="detail-dock" id="detailDock"></div>
+        <div class="detail-dock" id="detailDock" aria-live="polite"></div>
       </section>
     </div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <script
       src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
