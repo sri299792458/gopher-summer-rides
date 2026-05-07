@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gopher Summer Rides</title>
+    <link rel="preconnect" href="https://unpkg.com" />
+    <link rel="preconnect" href="https://tile.openstreetmap.org" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      crossorigin=""
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="planner-panel" aria-label="Summer ride planner">
+        <header class="app-header">
+          <div>
+            <p class="eyebrow">UMN summer 2026</p>
+            <h1>Gopher Summer Rides</h1>
+          </div>
+          <button class="icon-button" id="randomRideButton" type="button" title="Pick a backup ride" aria-label="Pick a backup ride">
+            <i data-lucide="shuffle"></i>
+          </button>
+        </header>
+
+        <section class="control-strip" aria-label="Ride controls">
+          <label class="field">
+            <span>Date</span>
+            <input id="dateInput" type="date" min="2026-05-18" max="2026-08-09" />
+          </label>
+          <label class="field">
+            <span>Energy</span>
+            <select id="energyFilter">
+              <option value="all">Any</option>
+              <option value="easy">Easy</option>
+              <option value="steady">Steady</option>
+              <option value="big">Big day</option>
+            </select>
+          </label>
+        </section>
+
+        <section class="today-card" aria-labelledby="todayTitle">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow" id="weekLabel">Week 1</p>
+              <h2 id="todayTitle">This week</h2>
+            </div>
+            <div class="season-meter" aria-label="Summer completion">
+              <span id="seasonProgress">0%</span>
+              <div class="meter-track"><div id="meterFill"></div></div>
+            </div>
+          </div>
+          <div class="ride-stack" id="weekRides"></div>
+        </section>
+
+        <nav class="tab-list" role="tablist" aria-label="Planner views">
+          <button class="tab is-active" id="scheduleTab" role="tab" aria-selected="true" aria-controls="schedulePanel" type="button" data-tab="schedule">
+            <i data-lucide="calendar-days"></i>
+            Schedule
+          </button>
+          <button class="tab" id="routesTab" role="tab" aria-selected="false" aria-controls="routesPanel" type="button" data-tab="routes">
+            <i data-lucide="map"></i>
+            Routes
+          </button>
+          <button class="tab" id="crewTab" role="tab" aria-selected="false" aria-controls="crewPanel" type="button" data-tab="crew">
+            <i data-lucide="users"></i>
+            Crew
+          </button>
+        </nav>
+
+        <main class="tab-panels">
+          <section class="tab-panel is-active" id="schedulePanel" role="tabpanel" aria-labelledby="scheduleTab" aria-label="Full summer schedule">
+            <div class="panel-title-row">
+              <h2>12-week rotation</h2>
+              <button class="text-button" id="resetButton" type="button">Reset done</button>
+            </div>
+            <div class="schedule-list" id="scheduleList"></div>
+          </section>
+
+          <section class="tab-panel" id="routesPanel" role="tabpanel" aria-labelledby="routesTab" aria-label="Route library">
+            <div class="panel-title-row">
+              <h2>Route library</h2>
+              <span id="routeCount"></span>
+            </div>
+            <div class="route-filter-row" role="group" aria-label="Route type filters">
+              <button class="filter-chip is-active" type="button" data-vibe="all" aria-pressed="true">All</button>
+              <button class="filter-chip" type="button" data-vibe="water" aria-pressed="false">Water</button>
+              <button class="filter-chip" type="button" data-vibe="city" aria-pressed="false">City</button>
+              <button class="filter-chip" type="button" data-vibe="green" aria-pressed="false">Green</button>
+              <button class="filter-chip" type="button" data-vibe="destination" aria-pressed="false">Destination</button>
+            </div>
+            <div class="route-list" id="routeList"></div>
+          </section>
+
+          <section class="tab-panel" id="crewPanel" role="tabpanel" aria-labelledby="crewTab" aria-label="Crew dashboard">
+            <div class="panel-title-row">
+              <h2>Crew board</h2>
+              <span id="doneCount"></span>
+            </div>
+            <div class="crew-grid">
+              <label class="crew-member">
+                <span>Rider 1</span>
+                <input id="riderOne" type="text" value="Student 1" />
+              </label>
+              <label class="crew-member">
+                <span>Rider 2</span>
+                <input id="riderTwo" type="text" value="Student 2" />
+              </label>
+              <label class="crew-member">
+                <span>Rider 3</span>
+                <input id="riderThree" type="text" value="Student 3" />
+              </label>
+            </div>
+            <div class="status-board">
+              <div>
+                <span class="stat-number" id="milesDone">0</span>
+                <span class="stat-label">miles completed</span>
+              </div>
+              <div>
+                <span class="stat-number" id="ridesDone">0</span>
+                <span class="stat-label">rides checked off</span>
+              </div>
+              <div>
+                <span class="stat-number" id="longestRide">0</span>
+                <span class="stat-label">longest ride</span>
+              </div>
+            </div>
+            <div class="source-block">
+              <h3>Check before rolling</h3>
+              <a href="https://www.minneapolisparks.org/parks-destinations/trails-parkways/" target="_blank" rel="noreferrer">Minneapolis trails</a>
+              <a href="https://www.threeriversparks.org/page/three-rivers-activity-status" target="_blank" rel="noreferrer">Three Rivers status</a>
+              <a href="https://www.co.dakota.mn.us/parks/parksTrails/BigRivers" target="_blank" rel="noreferrer">Big Rivers updates</a>
+              <a href="https://www.dnr.state.mn.us/state_trails/luce_line/index.html" target="_blank" rel="noreferrer">Luce Line DNR</a>
+            </div>
+          </section>
+        </main>
+      </aside>
+
+      <section class="map-panel" aria-label="Selected route map">
+        <div id="map"></div>
+        <div class="map-overlay">
+          <div>
+            <p class="eyebrow" id="selectedVibe">Water</p>
+            <h2 id="selectedTitle">Stone Arch + Boom Island</h2>
+          </div>
+          <div class="route-stats">
+            <span><i data-lucide="route"></i><strong id="selectedMiles">8</strong> approx mi</span>
+            <span><i data-lucide="timer"></i><strong id="selectedTime">55</strong> min</span>
+            <span><i data-lucide="gauge"></i><strong id="selectedEnergy">Easy</strong></span>
+          </div>
+        </div>
+        <div class="detail-dock" id="detailDock"></div>
+      </section>
+    </div>
+
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      crossorigin=""
+    ></script>
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.js"></script>
+    <script src="data/dataset.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
