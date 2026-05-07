@@ -144,21 +144,27 @@
           <section class="tab-panel" id="sharePanel" role="tabpanel" aria-labelledby="shareTab" aria-label="Sharing options">
             <div class="panel-title-row">
               <h2>Share the planner</h2>
-              <span>static site</span>
+              <span>send a real link</span>
             </div>
             <div class="share-grid">
-              <article class="share-card">
-                <h3>Same Wi-Fi</h3>
-                <p>Run the server on your laptop and give your friends your local network address.</p>
-                <code>python -m http.server 4173 --bind 0.0.0.0</code>
+              <article class="share-card share-card-primary">
+                <h3>Public share link</h3>
+                <p>Put this project in a GitHub repo, turn on Pages, and send your friends the Pages URL. That link works from anywhere.</p>
+                <code>Settings &gt; Pages &gt; Deploy from branch &gt; master &gt; /root</code>
               </article>
               <article class="share-card">
-                <h3>Permanent link</h3>
-                <p>Push this folder to GitHub, then enable Pages from the repository root.</p>
-                <code>Settings -> Pages -> Deploy from branch</code>
+                <h3>Fast option: Netlify Drop</h3>
+                <p>Upload the static site files and Netlify gives you a public link. Include only the files the browser needs.</p>
+                <code>index.html + styles.css + app.js + data/</code>
               </article>
               <article class="share-card">
-                <h3>Shared progress</h3>
+                <h3>Same-Wi-Fi preview</h3>
+                <p>Temporary test link only. Keep this laptop awake, run the server, then friends on the same Wi-Fi open your laptop's IPv4 address.</p>
+                <code>http://YOUR-IP:4173/</code>
+                <p class="share-warning">Do not send 127.0.0.1 or 0.0.0.0 to friends.</p>
+              </article>
+              <article class="share-card">
+                <h3>Progress is not shared yet</h3>
                 <p>Ride check-offs are local per browser. A shared scoreboard needs a small backend later.</p>
                 <code>localStorage only</code>
               </article>

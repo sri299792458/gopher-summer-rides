@@ -501,6 +501,11 @@ h3 {
   background: var(--white);
 }
 
+.share-card-primary {
+  border-color: rgba(122, 31, 43, 0.55);
+  box-shadow: inset 4px 0 0 var(--maroon);
+}
+
 .share-card h3,
 .share-card p {
   margin-bottom: 0;
@@ -510,6 +515,11 @@ h3 {
   color: var(--muted);
   font-size: 0.86rem;
   line-height: 1.4;
+}
+
+.share-card .share-warning {
+  color: var(--maroon);
+  font-weight: 850;
 }
 
 .share-card code {

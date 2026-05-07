@@ -25,14 +25,41 @@ Then open `http://127.0.0.1:4173/`.
 
 ## Share It
 
-The `127.0.0.1` URL only works on the computer running the server.
+The `127.0.0.1` URL only works on the computer running the server. It is not a share link.
 
-For a same-Wi-Fi preview:
+Recommended: publish the static site and send the public URL.
+
+### Option A: Public link with GitHub Pages
+
+Use this when you want friends to open the planner from anywhere.
+
+- Push this repo to GitHub.
+- In the repo, open Settings -> Pages.
+- Choose "Deploy from a branch".
+- Use the `master` branch and `/ (root)` folder. If you rename the branch to `main`, choose `main` instead.
+- Send the Pages URL to the other riders.
+
+The app is static, so there is no build step.
+
+### Option B: Netlify Drop
+
+- Upload only the static site files: `index.html`, `styles.css`, `app.js`, and `data/`.
+- Netlify gives you a public `netlify.app` URL.
+
+### Option C: Temporary same-Wi-Fi preview
+
+Use this only for quick testing while your laptop is running.
 
 ```powershell
 python -m http.server 4173 --bind 0.0.0.0
 ```
 
-Then find your laptop's IPv4 address with `ipconfig` and have friends open `http://YOUR-IP:4173/`.
+Find your laptop's IPv4 address with `ipconfig`, then have friends on the same Wi-Fi open:
 
-For a permanent link, push the repo to GitHub and enable GitHub Pages from the repository root. The app is static, so it does not need a build step. Completion check-offs are currently stored per browser; a shared live scoreboard would need a small backend.
+```text
+http://YOUR-IP:4173/
+```
+
+`127.0.0.1` only works on your own computer. `0.0.0.0` starts the server, but it is not the link to share.
+
+Completion check-offs are currently stored per browser; a shared live scoreboard would need a small backend.
