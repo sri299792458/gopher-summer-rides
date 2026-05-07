@@ -2,6 +2,8 @@
 
 A small static web app for three University of Minnesota students who want summer 2026 bike rides chosen ahead of time. The default plan now uses 36 distinct route ideas across 12 weeks.
 
+Live site: https://sri299792458.github.io/gopher-summer-rides/
+
 ## Dataset
 
 The local dataset lives in `data/dataset.js`.

@@ -46,3 +46,10 @@ Route geometry is approximate waypoint geometry for planning and visualization, 
 - Added hidden-gem variants including Nicollet Island lighthouse, Bridal Veil/Franklin gorge, Witch's Hat, Deming Heights, Hidden Falls/Crosby, Summit/Cathedral, Capital City/Harriet Island, Bruce Vento/Swede Hollow, Lake Phalen, North Mississippi/Webber, and Silverwood.
 - Sharing guidance should be honest: `127.0.0.1` is local only; same-Wi-Fi sharing uses `--bind 0.0.0.0`; durable sharing is best through GitHub Pages or another static host. Progress remains per browser until a backend exists.
 - User pushed back that the first sharing option was confusing. Reframed sharing around a public URL first, with same-Wi-Fi clearly labeled as a temporary preview only.
+
+## Deployment
+
+- Public GitHub repo: https://github.com/sri299792458/gopher-summer-rides
+- GitHub Pages URL: https://sri299792458.github.io/gopher-summer-rides/
+- Pages source: `master` branch, repository root.
+- Verified live site in browser on May 7, 2026 with no fresh console warnings or errors.
