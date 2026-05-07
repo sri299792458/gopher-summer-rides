@@ -38,3 +38,10 @@ Route geometry is approximate waypoint geometry for planning and visualization, 
 
 - Data review recommended route-level source keys, distance method labels, caveats for custom mileage, and clear geometry precision. Added those to `data/dataset.js`.
 - UI review found SRI/CDN, native button styling, energy-filter, ARIA, map fallback, and localStorage boot risks. Fixes are being applied before browser verification.
+
+## May 7 update
+
+- User clarified that the summer should feel like exploration, not repeating the same obvious loops.
+- Reworked the schedule toward 36 distinct ride ids.
+- Added hidden-gem variants including Nicollet Island lighthouse, Bridal Veil/Franklin gorge, Witch's Hat, Deming Heights, Hidden Falls/Crosby, Summit/Cathedral, Capital City/Harriet Island, Bruce Vento/Swede Hollow, Lake Phalen, North Mississippi/Webber, and Silverwood.
+- Sharing guidance should be honest: `127.0.0.1` is local only; same-Wi-Fi sharing uses `--bind 0.0.0.0`; durable sharing is best through GitHub Pages or another static host. Progress remains per browser until a backend exists.

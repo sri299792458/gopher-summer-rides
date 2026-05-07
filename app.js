@@ -47,6 +47,7 @@ const riderInputs = [document.querySelector("#riderOne"), document.querySelector
 
 const summerStart = new Date("2026-05-18T12:00:00");
 const summerEnd = new Date("2026-08-09T12:00:00");
+const totalScheduledRides = schedule.reduce((sum, week) => sum + Object.keys(week.rides).length, 0);
 let map;
 let routeLayer;
 let markerLayer;
@@ -190,8 +191,8 @@ function renderStats() {
 
   const totalMiles = completedDetails.reduce((sum, route) => sum + route.miles, 0);
   const longest = completedDetails.reduce((max, route) => Math.max(max, route.miles), 0);
-  const percent = Math.round((state.completed.size / 36) * 100);
-  doneCount.textContent = `${state.completed.size}/36 done`;
+  const percent = Math.round((state.completed.size / totalScheduledRides) * 100);
+  doneCount.textContent = `${state.completed.size}/${totalScheduledRides} done`;
   milesDone.textContent = totalMiles;
   ridesDone.textContent = state.completed.size;
   longestRide.textContent = longest;

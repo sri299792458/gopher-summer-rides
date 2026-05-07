@@ -69,12 +69,16 @@
             <i data-lucide="users"></i>
             Crew
           </button>
+          <button class="tab" id="shareTab" role="tab" aria-selected="false" aria-controls="sharePanel" type="button" data-tab="share">
+            <i data-lucide="share-2"></i>
+            Share
+          </button>
         </nav>
 
         <main class="tab-panels">
           <section class="tab-panel is-active" id="schedulePanel" role="tabpanel" aria-labelledby="scheduleTab" aria-label="Full summer schedule">
             <div class="panel-title-row">
-              <h2>12-week rotation</h2>
+              <h2>36 unique rides</h2>
               <button class="text-button" id="resetButton" type="button">Reset done</button>
             </div>
             <div class="schedule-list" id="scheduleList"></div>
@@ -134,6 +138,30 @@
               <a href="https://www.threeriversparks.org/page/three-rivers-activity-status" target="_blank" rel="noreferrer">Three Rivers status</a>
               <a href="https://www.co.dakota.mn.us/parks/parksTrails/BigRivers" target="_blank" rel="noreferrer">Big Rivers updates</a>
               <a href="https://www.dnr.state.mn.us/state_trails/luce_line/index.html" target="_blank" rel="noreferrer">Luce Line DNR</a>
+            </div>
+          </section>
+
+          <section class="tab-panel" id="sharePanel" role="tabpanel" aria-labelledby="shareTab" aria-label="Sharing options">
+            <div class="panel-title-row">
+              <h2>Share the planner</h2>
+              <span>static site</span>
+            </div>
+            <div class="share-grid">
+              <article class="share-card">
+                <h3>Same Wi-Fi</h3>
+                <p>Run the server on your laptop and give your friends your local network address.</p>
+                <code>python -m http.server 4173 --bind 0.0.0.0</code>
+              </article>
+              <article class="share-card">
+                <h3>Permanent link</h3>
+                <p>Push this folder to GitHub, then enable Pages from the repository root.</p>
+                <code>Settings -> Pages -> Deploy from branch</code>
+              </article>
+              <article class="share-card">
+                <h3>Shared progress</h3>
+                <p>Ride check-offs are local per browser. A shared scoreboard needs a small backend later.</p>
+                <code>localStorage only</code>
+              </article>
             </div>
           </section>
         </main>
