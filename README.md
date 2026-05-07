@@ -27,7 +27,7 @@ Primary sources include Minneapolis Park and Recreation Board, Three Rivers Park
 - Per-ride RSVP chips for quick local planning.
 - Default 6:30 AM meet time with per-ride meet-time, meet-spot, and note overrides.
 - Refreshable upcoming route picks, while completed rides and the Grand Rounds finale stay locked.
-- Strava handoff for post-ride upload or club workflow.
+- Strava app handoff for starting a recording, with a mobile/web fallback and optional club link.
 - `.ics` calendar export for the full summer plan.
 - Official status/source links and route caveats.
 

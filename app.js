@@ -586,10 +586,36 @@ function getWhatsAppUrl(route) {
   return `https://wa.me/?text=${encodeURIComponent(buildWhatsAppText(route))}`;
 }
 
-function getStravaUploadUrl() {
-  return state.preferences.stravaClub.startsWith("http")
-    ? state.preferences.stravaClub
-    : "https://www.strava.com/upload/select";
+function getStravaClubUrl() {
+  return state.preferences.stravaClub.startsWith("http") ? state.preferences.stravaClub : "";
+}
+
+function getStravaFallbackUrl() {
+  return getStravaClubUrl() || "https://www.strava.com/mobile";
+}
+
+function getStravaLaunchUrl() {
+  const fallback = encodeURIComponent(getStravaFallbackUrl());
+  if (/Android/i.test(navigator.userAgent)) {
+    return `intent://record#Intent;scheme=strava;package=com.strava;S.browser_fallback_url=${fallback};end`;
+  }
+  return "strava://record";
+}
+
+function openStravaApp(event) {
+  event.preventDefault();
+  const fallbackUrl = getStravaFallbackUrl();
+  const launchUrl = getStravaLaunchUrl();
+  const startedAt = Date.now();
+
+  showToast("Opening Strava app...");
+  window.location.href = launchUrl;
+
+  window.setTimeout(() => {
+    if (document.hidden || Date.now() - startedAt > 2500) return;
+    window.open(fallbackUrl, "_blank", "noopener,noreferrer");
+    showToast("Opened Strava fallback.");
+  }, 900);
 }
 
 function pad(number) {
@@ -876,14 +902,22 @@ function renderSelectedRoute() {
           <i data-lucide="message-circle"></i>
           Send to WhatsApp
         </a>
-        <a class="inline-action action-strava" href="${getStravaUploadUrl()}" target="_blank" rel="noopener noreferrer">
+        <a class="inline-action action-strava" href="${getStravaFallbackUrl()}" data-strava-launch>
           <i data-lucide="activity"></i>
-          Open Strava
+          Start Strava
         </a>
         <a class="inline-action" href="${getGoogleMapsUrl(route)}" target="_blank" rel="noopener noreferrer">
           <i data-lucide="map-pin"></i>
           Map search
         </a>
+        ${
+          getStravaClubUrl()
+            ? `<a class="inline-action action-strava-club" href="${escapeHtml(getStravaClubUrl())}" target="_blank" rel="noopener noreferrer">
+                <i data-lucide="users"></i>
+                Strava club
+              </a>`
+            : ""
+        }
       </div>
       <div class="source-links">
         ${routeSources.map((source) => `<a href="${source.url}" target="_blank" rel="noopener noreferrer">${source.label}</a>`).join("")}
@@ -1004,6 +1038,12 @@ function initEvents() {
     const tabButton = event.target.closest("[data-tab]");
     const vibeButton = event.target.closest("[data-vibe]");
     const rsvpButton = event.target.closest("[data-rsvp-key]");
+    const stravaButton = event.target.closest("[data-strava-launch]");
+
+    if (stravaButton) {
+      openStravaApp(event);
+      return;
+    }
 
     if (doneButton) {
       const key = doneButton.dataset.doneKey;

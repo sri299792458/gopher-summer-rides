@@ -78,3 +78,4 @@ Route geometry is approximate waypoint geometry for planning and visualization, 
 - Date picker min/max now derive from the generated season dates; static HTML defaults were updated to May 8 through August 8, 2026.
 - Clarified product truth: public code updates propagate after deployment, but rider names, RSVPs, completed rides, and route refreshes are still per-browser until a shared-state backend is added.
 - Set default meet time to 6:30 AM and added per-ride overrides for meet time, meet spot, and planning note.
+- Replaced the Strava upload/login link with a best-effort mobile app launch (`strava://record` or Android intent) and a non-login fallback to Strava mobile or the configured club URL.
