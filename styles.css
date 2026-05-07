@@ -170,7 +170,9 @@ h3 {
 
 .field input,
 .field select,
-.crew-member input {
+.crew-member input,
+.ride-customizer input,
+.ride-customizer textarea {
   min-height: 42px;
   width: 100%;
   border: 1px solid var(--line);
@@ -180,6 +182,12 @@ h3 {
   padding: 0 12px;
   text-transform: none;
   font-weight: 650;
+}
+
+.ride-customizer textarea {
+  min-height: 66px;
+  padding-top: 10px;
+  resize: vertical;
 }
 
 .today-card,
@@ -243,6 +251,11 @@ h3 {
   padding: 12px;
 }
 
+.ride-main {
+  display: grid;
+  gap: 9px;
+}
+
 .day-pill {
   display: grid;
   place-items: center;
@@ -273,6 +286,42 @@ h3 {
   color: inherit;
   text-align: left;
   padding: 0;
+}
+
+.rsvp-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.rsvp-chip {
+  min-height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #f7f5ef;
+  color: var(--muted);
+  padding: 0 8px;
+  font-size: 0.75rem;
+  font-weight: 850;
+}
+
+.rsvp-chip.is-in {
+  border-color: rgba(39, 122, 99, 0.45);
+  background: #eff6f3;
+  color: var(--green);
+}
+
+.rsvp-chip.is-maybe,
+.rsvp-chip.is-late {
+  border-color: rgba(240, 180, 41, 0.65);
+  background: #fff6d8;
+  color: #6b4b00;
+}
+
+.rsvp-chip.is-out {
+  border-color: rgba(122, 31, 43, 0.35);
+  background: #fff0f1;
+  color: var(--maroon);
 }
 
 .meta-line {
@@ -412,6 +461,19 @@ h3 {
   color: var(--ink);
 }
 
+.finale-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  margin-left: 6px;
+  border-radius: 999px;
+  background: var(--maroon);
+  color: var(--white);
+  padding: 0 8px;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
 .route-filter-row {
   gap: 8px;
   flex-wrap: wrap;
@@ -456,10 +518,15 @@ h3 {
   line-height: 1.35;
 }
 
-.crew-grid {
+.crew-grid,
+.custom-grid {
   display: grid;
   gap: 10px;
   margin: 14px 0;
+}
+
+.custom-grid {
+  grid-template-columns: 1fr 1fr;
 }
 
 .status-board {
@@ -492,8 +559,7 @@ h3 {
   font-weight: 800;
 }
 
-.source-block,
-.share-grid {
+.source-block {
   display: grid;
   gap: 8px;
   padding-top: 6px;
@@ -507,53 +573,6 @@ h3 {
 
 .source-block a:hover {
   text-decoration: underline;
-}
-
-.share-grid {
-  margin-top: 14px;
-  gap: 10px;
-}
-
-.share-card {
-  display: grid;
-  gap: 8px;
-  padding: 13px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--white);
-}
-
-.share-card-primary {
-  border-color: rgba(122, 31, 43, 0.55);
-  box-shadow: inset 4px 0 0 var(--maroon);
-}
-
-.share-card h3,
-.share-card p {
-  margin-bottom: 0;
-}
-
-.share-card p {
-  color: var(--muted);
-  font-size: 0.86rem;
-  line-height: 1.4;
-}
-
-.share-card .share-warning {
-  color: var(--maroon);
-  font-weight: 850;
-}
-
-.share-card code {
-  display: block;
-  overflow-x: auto;
-  border-radius: var(--radius);
-  background: #f3efe3;
-  padding: 9px 10px;
-  color: var(--maroon);
-  font-size: 0.8rem;
-  font-weight: 800;
-  white-space: nowrap;
 }
 
 .inline-action {
@@ -676,6 +695,67 @@ h3 {
 }
 
 .action-grid .inline-action:last-child {
+  grid-column: 1 / -1;
+}
+
+.action-whatsapp {
+  border-color: rgba(39, 122, 99, 0.45);
+  background: #eff6f3;
+  color: var(--green);
+}
+
+.action-strava {
+  border-color: rgba(200, 107, 40, 0.45);
+  background: #fff4eb;
+  color: #a34d16;
+}
+
+.ride-ops {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ride-ops > div {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+  padding: 9px;
+}
+
+.ride-ops span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.ride-ops strong {
+  display: block;
+  margin-top: 3px;
+  color: var(--ink);
+  font-size: 0.9rem;
+}
+
+.ride-customizer {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.ride-customizer label {
+  display: grid;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.ride-customizer .ride-note-field {
   grid-column: 1 / -1;
 }
 
@@ -819,7 +899,10 @@ h3 {
   .ride-card,
   .detail-dock,
   .status-board,
-  .action-grid {
+  .action-grid,
+  .custom-grid,
+  .ride-ops,
+  .ride-customizer {
     grid-template-columns: 1fr;
   }
 

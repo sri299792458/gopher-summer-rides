@@ -1,6 +1,13 @@
 (() => {
-const { routes, schedule, sources } = window.RIDE_DATA;
+const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const { routes, schedulePlan, sources } = window.RIDE_DATA;
 const routeById = new Map(routes.map((route) => [route.id, route]));
+let scheduleSlots = [];
+let schedule = [];
+let lastScheduledWeek;
+let summerStart;
+let summerEnd;
+let totalScheduledRides = routes.length;
 
 function safeJsonStorage(key, fallback) {
   try {
@@ -17,12 +24,35 @@ function safeArrayStorage(key, fallback) {
   return Array.isArray(value) ? value : fallback;
 }
 
+function safeObjectStorage(key, fallback) {
+  const value = safeJsonStorage(key, fallback);
+  return value && typeof value === "object" && !Array.isArray(value) ? value : fallback;
+}
+
+function safeNumberStorage(key, fallback) {
+  const value = Number(localStorage.getItem(key));
+  return Number.isFinite(value) ? value : fallback;
+}
+
+const defaultRiders = ["Sri", "Apurv", "Ayaan"];
+const defaultPreferences = {
+  weeknightTime: "06:30",
+  saturdayTime: "06:30",
+  meetSpot: "UMN East Bank",
+  stravaClub: "",
+};
+
 const state = {
   selectedRouteId: "stone-arch-boom",
   activeVibe: "all",
   activeTab: "schedule",
   completed: new Set(safeArrayStorage("completedRides", [])),
-  riders: safeArrayStorage("riders", ["Student 1", "Student 2", "Student 3"]),
+  riders: safeArrayStorage("riders", defaultRiders),
+  preferences: { ...defaultPreferences, ...safeObjectStorage("ridePreferences", {}) },
+  rsvps: safeObjectStorage("rideRsvps", {}),
+  planAssignments: safeObjectStorage("planAssignments", {}),
+  planSeed: safeNumberStorage("planSeed", 0),
+  rideOverrides: safeObjectStorage("rideOverrides", {}),
 };
 
 const dateInput = document.querySelector("#dateInput");
@@ -46,15 +76,16 @@ const achievementList = document.querySelector("#achievementList");
 const seasonProgress = document.querySelector("#seasonProgress");
 const meterFill = document.querySelector("#meterFill");
 const riderInputs = [document.querySelector("#riderOne"), document.querySelector("#riderTwo"), document.querySelector("#riderThree")];
+const preferenceInputs = {
+  weeknightTime: document.querySelector("#weeknightTime"),
+  saturdayTime: document.querySelector("#saturdayTime"),
+  meetSpot: document.querySelector("#meetSpot"),
+  stravaClub: document.querySelector("#stravaClub"),
+};
 const toast = document.querySelector("#toast");
 
-const summerStart = new Date("2026-05-18T12:00:00");
-const summerEnd = new Date("2026-08-09T12:00:00");
-const totalScheduledRides = schedule.reduce((sum, week) => sum + Object.keys(week.rides).length, 0);
-const dayOffsets = { Tue: 1, Thu: 3, Sat: 5 };
-const rideStartTimes = { Tue: "180000", Thu: "180000", Sat: "100000" };
 const weekThemes = {
-  1: "Campus river orientation",
+  1: "Kickoff and river orientation",
   2: "Hidden Minneapolis",
   3: "Overlooks and first sampler",
   4: "East and Northeast discoveries",
@@ -65,11 +96,233 @@ const weekThemes = {
   9: "Rail trails and east side",
   10: "St. Paul architecture",
   11: "Ravines and west metro",
-  12: "Big finale trailheads",
+  12: "Grand Rounds finale",
 };
 let map;
 let routeLayer;
 let markerLayer;
+
+function parseDateValue(value) {
+  return new Date(`${value}T12:00:00`);
+}
+
+function dayLabelForDate(date) {
+  return dayLabels[date.getDay()];
+}
+
+function addDays(date, days) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function nextCadenceDateAfter(date, cadence) {
+  let next = addDays(date, 1);
+  while (!cadence.includes(dayLabelForDate(next))) {
+    next = addDays(next, 1);
+  }
+  return next;
+}
+
+function nextDayOnOrAfter(date, targetDay) {
+  let next = new Date(date);
+  while (dayLabelForDate(next) !== targetDay) {
+    next = addDays(next, 1);
+  }
+  return next;
+}
+
+function hashString(value) {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function validateScheduledRouteIds(knownRouteIds, slots) {
+  const scheduledIds = slots.map((slot) => slot.routeId).filter(Boolean);
+  const missingIds = scheduledIds.filter((routeId) => !knownRouteIds.has(routeId));
+  const duplicateIds = scheduledIds.filter((routeId, index) => scheduledIds.indexOf(routeId) !== index);
+  const unscheduledIds = [...knownRouteIds].filter((routeId) => !scheduledIds.includes(routeId));
+
+  if (missingIds.length || duplicateIds.length || unscheduledIds.length) {
+    throw new Error(
+      [
+        "Schedule plan is invalid.",
+        missingIds.length ? `Missing route ids: ${missingIds.join(", ")}` : "",
+        duplicateIds.length ? `Duplicate route ids: ${[...new Set(duplicateIds)].join(", ")}` : "",
+        unscheduledIds.length ? `Unscheduled route ids: ${unscheduledIds.join(", ")}` : "",
+      ]
+        .filter(Boolean)
+        .join(" "),
+    );
+  }
+
+  if (!slots.every((slot) => slot.routeId)) throw new Error("Schedule plan has unassigned ride slots.");
+}
+
+function groupScheduleSlots(slots, weekSize) {
+  const weeks = [];
+  for (let index = 0; index < slots.length; index += weekSize) {
+    const chunk = slots.slice(index, index + weekSize);
+    weeks.push({
+      week: weeks.length + 1,
+      start: chunk[0].date,
+      end: chunk[chunk.length - 1].date,
+      slots: chunk,
+    });
+  }
+  return weeks;
+}
+
+function buildScheduleSlots(plan, routeList) {
+  const knownRouteIds = new Set(routeList.map((route) => route.id));
+  if (!plan.cadence?.length) throw new Error("Schedule plan needs at least one cadence day.");
+
+  const kickoffSlots = (plan.kickoff || [])
+    .map((slot) => {
+      const date = parseDateValue(slot.date);
+      const day = slot.day || dayLabelForDate(date);
+      return {
+        id: formatDateValue(date),
+        date: formatDateValue(date),
+        day,
+        label: slot.label || day,
+        routeId: slot.routeId,
+        fixedRouteId: slot.routeId,
+        locked: true,
+        kind: "kickoff",
+      };
+    })
+    .sort((a, b) => parseDateValue(a.date) - parseDateValue(b.date));
+
+  const slots = [...kickoffSlots];
+  let cursor = kickoffSlots.length
+    ? parseDateValue(kickoffSlots[kickoffSlots.length - 1].date)
+    : parseDateValue(plan.seasonStart);
+
+  const fixedRouteIds = new Set([...kickoffSlots.map((slot) => slot.routeId), plan.finaleRouteId]);
+  const flexibleCount = routeList.length - fixedRouteIds.size;
+  if (flexibleCount < 0) throw new Error("Schedule plan reserves more fixed routes than exist.");
+
+  for (let index = 0; index < flexibleCount; index += 1) {
+    cursor = nextCadenceDateAfter(cursor, plan.cadence);
+    const day = dayLabelForDate(cursor);
+    slots.push({
+      id: formatDateValue(cursor),
+      date: formatDateValue(cursor),
+      day,
+      label: day,
+      routeId: null,
+      kind: "adaptive",
+    });
+  }
+
+  const earliestFinaleDate = addDays(cursor, plan.finaleRestDays ?? 0);
+  let finaleDate = nextDayOnOrAfter(earliestFinaleDate, plan.finaleDay);
+  if (finaleDate <= cursor) {
+    finaleDate = nextDayOnOrAfter(addDays(cursor, 1), plan.finaleDay);
+  }
+  slots.push({
+    id: formatDateValue(finaleDate),
+    date: formatDateValue(finaleDate),
+    day: dayLabelForDate(finaleDate),
+    label: "Finale",
+    routeId: plan.finaleRouteId,
+    fixedRouteId: plan.finaleRouteId,
+    locked: true,
+    kind: "finale",
+    isFinale: true,
+  });
+
+  const unknownFixedIds = [...fixedRouteIds].filter((routeId) => !knownRouteIds.has(routeId));
+  if (unknownFixedIds.length) throw new Error(`Schedule plan has unknown fixed route ids: ${unknownFixedIds.join(", ")}`);
+  return slots;
+}
+
+function energyFitScore(route, slotIndex, totalSlots) {
+  const phase = totalSlots <= 1 ? 1 : slotIndex / (totalSlots - 1);
+  const target = { easy: 0.2, steady: 0.55, big: 0.86 }[route.energy] ?? 0.5;
+  return Math.abs(phase - target) * 5;
+}
+
+function pickAdaptiveRoute(pool, slot, slotIndex, totalSlots, previousRoute, seed) {
+  if (!pool.length) throw new Error(`No adaptive route left for ${slot.date}.`);
+  return pool
+    .map((routeId) => {
+      const route = routeById.get(routeId);
+      const vibePenalty = previousRoute?.vibe === route.vibe ? 1.1 : 0;
+      const bigEarlyPenalty = route.energy === "big" && slotIndex < Math.floor(totalSlots * 0.45) ? 1.7 : 0;
+      const seededNoise = (hashString(`${seed}|${slot.date}|${route.id}`) % 1000) / 1000;
+      return {
+        routeId,
+        score: energyFitScore(route, slotIndex, totalSlots) + vibePenalty + bigEarlyPenalty + seededNoise,
+      };
+    })
+    .sort((a, b) => a.score - b.score)[0].routeId;
+}
+
+function normalizePlanAssignments({ preserve = true } = {}) {
+  const knownRouteIds = new Set(routes.map((route) => route.id));
+  const fixedRouteIds = new Set(scheduleSlots.filter((slot) => slot.fixedRouteId).map((slot) => slot.fixedRouteId));
+  const nextAssignments = {};
+  const usedRouteIds = new Set(fixedRouteIds);
+  const flexibleSlots = scheduleSlots.filter((slot) => !slot.fixedRouteId);
+
+  for (const slot of scheduleSlots.filter((item) => item.fixedRouteId)) {
+    nextAssignments[slot.id] = slot.fixedRouteId;
+  }
+
+  if (preserve) {
+    for (const slot of flexibleSlots) {
+      const routeId = state.planAssignments[slot.id];
+      if (!routeId || !knownRouteIds.has(routeId) || usedRouteIds.has(routeId)) continue;
+      nextAssignments[slot.id] = routeId;
+      usedRouteIds.add(routeId);
+    }
+  }
+
+  let pool = routes
+    .map((route) => route.id)
+    .filter((routeId) => !usedRouteIds.has(routeId));
+
+  const unassignedSlots = flexibleSlots.filter((slot) => !nextAssignments[slot.id]);
+  for (const slot of unassignedSlots) {
+    const slotIndex = scheduleSlots.findIndex((item) => item.id === slot.id);
+    const previousSlot = scheduleSlots[slotIndex - 1];
+    const previousRoute = previousSlot ? routeById.get(nextAssignments[previousSlot.id]) : null;
+    const pickedRouteId = pickAdaptiveRoute(pool, slot, slotIndex, scheduleSlots.length, previousRoute, state.planSeed);
+    nextAssignments[slot.id] = pickedRouteId;
+    usedRouteIds.add(pickedRouteId);
+    pool = pool.filter((routeId) => routeId !== pickedRouteId);
+  }
+
+  state.planAssignments = nextAssignments;
+  savePlanState();
+}
+
+function buildScheduleFromAssignments() {
+  const slots = scheduleSlots.map((slot) => ({
+    ...slot,
+    routeId: slot.fixedRouteId || state.planAssignments[slot.id],
+  }));
+  validateScheduledRouteIds(new Set(routes.map((route) => route.id)), slots);
+  return groupScheduleSlots(slots, schedulePlan.weekSize || 3);
+}
+
+function refreshSchedule({ preserve = true } = {}) {
+  scheduleSlots = buildScheduleSlots(schedulePlan, routes);
+  normalizePlanAssignments({ preserve });
+  schedule = buildScheduleFromAssignments();
+  lastScheduledWeek = schedule[schedule.length - 1];
+  const firstScheduledSlot = schedule[0].slots[0];
+  const lastScheduledSlot = lastScheduledWeek.slots[lastScheduledWeek.slots.length - 1];
+  summerStart = parseDateValue(firstScheduledSlot.date);
+  summerEnd = parseDateValue(lastScheduledSlot.date);
+  totalScheduledRides = scheduleSlots.length;
+}
 
 function clampDate(date) {
   if (date < summerStart) return summerStart;
@@ -82,23 +335,51 @@ function formatDateValue(date) {
 }
 
 function getWeekForDate(value) {
-  const date = clampDate(new Date(`${value}T12:00:00`));
-  const diff = date - summerStart;
-  const weekIndex = Math.min(11, Math.max(0, Math.floor(diff / (7 * 24 * 60 * 60 * 1000))));
-  return schedule[weekIndex];
+  const date = clampDate(parseDateValue(value));
+  return schedule.find((week) => parseDateValue(week.end) >= date) || lastScheduledWeek;
 }
 
-function formatWeekRange(startValue) {
-  const start = new Date(`${startValue}T12:00:00`);
-  const end = new Date(start);
-  end.setDate(start.getDate() + 6);
+function formatWeekRange(week) {
+  const start = parseDateValue(week.start);
+  const end = parseDateValue(week.end);
   const month = start.toLocaleString("en-US", { month: "short" });
   const endMonth = end.toLocaleString("en-US", { month: "short" });
+  if (month === endMonth) return `${month} ${start.getDate()}-${end.getDate()}`;
   return `${month} ${start.getDate()}-${endMonth} ${end.getDate()}`;
 }
 
-function rideKey(weekNumber, day, routeId) {
-  return `${weekNumber}-${day}-${routeId}`;
+function rideKey(slot) {
+  return `${slot.date}-${slot.routeId}`;
+}
+
+function routeIdFromRideKey(key) {
+  const dateKeyMatch = key.match(/^\d{4}-\d{2}-\d{2}-(.+)$/);
+  if (dateKeyMatch) return dateKeyMatch[1];
+  return key.split("-").slice(2).join("-");
+}
+
+function getCompletedRouteIds() {
+  return new Set([...state.completed].map(routeIdFromRideKey).filter((routeId) => routeById.has(routeId)));
+}
+
+function isRideDone(slot) {
+  return state.completed.has(rideKey(slot)) || getCompletedRouteIds().has(slot.routeId);
+}
+
+function refreshUpcomingPlan() {
+  const cutoff = clampDate(parseDateValue(dateInput.value));
+  const completedRouteIds = getCompletedRouteIds();
+
+  for (const slot of scheduleSlots) {
+    if (slot.fixedRouteId || parseDateValue(slot.date) < cutoff) continue;
+    const routeId = state.planAssignments[slot.id];
+    if (routeId && !completedRouteIds.has(routeId)) delete state.planAssignments[slot.id];
+  }
+
+  state.planSeed += 1;
+  refreshSchedule({ preserve: true });
+  renderAll();
+  showToast("Upcoming picks refreshed.");
 }
 
 function saveCompleted() {
@@ -107,6 +388,23 @@ function saveCompleted() {
 
 function saveRiders() {
   localStorage.setItem("riders", JSON.stringify(state.riders));
+}
+
+function savePreferences() {
+  localStorage.setItem("ridePreferences", JSON.stringify(state.preferences));
+}
+
+function saveRsvps() {
+  localStorage.setItem("rideRsvps", JSON.stringify(state.rsvps));
+}
+
+function savePlanState() {
+  localStorage.setItem("planAssignments", JSON.stringify(state.planAssignments));
+  localStorage.setItem("planSeed", String(state.planSeed));
+}
+
+function saveRideOverrides() {
+  localStorage.setItem("rideOverrides", JSON.stringify(state.rideOverrides));
 }
 
 function getInitialParams() {
@@ -132,7 +430,8 @@ function updateUrlState() {
 }
 
 function buildRouteUrl(routeId) {
-  const url = new URL("https://sri299792458.github.io/gopher-summer-rides/");
+  const url = new URL(window.location.href);
+  url.search = "";
   url.searchParams.set("route", routeId);
   url.searchParams.set("tab", "routes");
   return url.toString();
@@ -145,22 +444,20 @@ function showToast(message) {
   showToast.timeoutId = window.setTimeout(() => toast.classList.remove("is-visible"), 2400);
 }
 
-function getRideDate(weekStart, day) {
-  const date = new Date(`${weekStart}T12:00:00`);
-  date.setDate(date.getDate() + dayOffsets[day]);
-  return date;
+function getRideDate(slot) {
+  return parseDateValue(slot.date);
 }
 
-function formatRideDate(weekStart, day) {
-  const date = getRideDate(weekStart, day);
+function formatRideDate(slot) {
+  const date = getRideDate(slot);
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 function getSelectedScheduleSlot(routeId) {
   for (const week of schedule) {
-    for (const [day, scheduledRouteId] of Object.entries(week.rides)) {
-      if (scheduledRouteId === routeId) {
-        return { week, day, date: getRideDate(week.start, day) };
+    for (const slot of week.slots) {
+      if (slot.routeId === routeId) {
+        return { week, slot, date: getRideDate(slot) };
       }
     }
   }
@@ -173,32 +470,126 @@ function getGoogleMapsUrl(route) {
   return `https://www.google.com/maps/search/?api=1&query=${query}&query_place_id=&center=${lat},${lng}`;
 }
 
-function buildRideText(route) {
-  const slot = getSelectedScheduleSlot(route.id);
-  const when = slot ? `${slot.day}, ${formatRideDate(slot.week.start, slot.day)}` : "summer 2026";
-  const stops = route.stops.join(", ");
-  return `Gopher Summer Rides: ${route.name} on ${when}. ${route.miles} approx mi, ${route.energy}, ${route.surface}. Stops: ${stops}. Plan: https://sri299792458.github.io/gopher-summer-rides/`;
+function getRideMeetTime(slotOrDay) {
+  const day = typeof slotOrDay === "string" ? slotOrDay : slotOrDay.day;
+  const override = typeof slotOrDay === "string" ? null : state.rideOverrides[slotOrDay.id];
+  if (override?.time) return override.time;
+  return day === "Sat" ? state.preferences.saturdayTime : state.preferences.weeknightTime;
 }
 
-async function copyText(text, successMessage) {
-  try {
-    if (navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(text);
-    } else {
-      const textarea = document.createElement("textarea");
-      textarea.value = text;
-      textarea.setAttribute("readonly", "");
-      textarea.style.position = "fixed";
-      textarea.style.left = "-9999px";
-      document.body.append(textarea);
-      textarea.select();
-      document.execCommand("copy");
-      textarea.remove();
-    }
-    showToast(successMessage);
-  } catch {
-    showToast("Copy failed. Select the text manually.");
+function getRideMeetSpot(slot) {
+  if (slot && state.rideOverrides[slot.id]?.spot) return state.rideOverrides[slot.id].spot;
+  return state.preferences.meetSpot;
+}
+
+function getRidePlanNote(slot) {
+  if (!slot) return "";
+  return state.rideOverrides[slot.id]?.note || "";
+}
+
+function updateRideOverride(slotId, field, rawValue) {
+  const slot = scheduleSlots.find((item) => item.id === slotId);
+  if (!slot || !["time", "spot", "note"].includes(field)) return;
+
+  const value = field === "note" ? rawValue.trim() : rawValue;
+  const fallback = {
+    time: slot.day === "Sat" ? state.preferences.saturdayTime : state.preferences.weeknightTime,
+    spot: state.preferences.meetSpot,
+    note: "",
+  }[field];
+  const override = { ...(state.rideOverrides[slotId] || {}) };
+
+  if (!value || value === fallback) {
+    delete override[field];
+  } else {
+    override[field] = value;
   }
+
+  if (Object.keys(override).length) {
+    state.rideOverrides[slotId] = override;
+  } else {
+    delete state.rideOverrides[slotId];
+  }
+
+  saveRideOverrides();
+
+  const selectedRoute = routeById.get(state.selectedRouteId);
+  const whatsAppAction = document.querySelector(".action-whatsapp");
+  if (selectedRoute && whatsAppAction) whatsAppAction.href = getWhatsAppUrl(selectedRoute);
+  const timeDisplay = document.querySelector("[data-selected-meet-time]");
+  const spotDisplay = document.querySelector("[data-selected-meet-spot]");
+  if (timeDisplay) timeDisplay.textContent = getRideMeetTime(slot);
+  if (spotDisplay) spotDisplay.textContent = getRideMeetSpot(slot);
+}
+
+function getRideStartTimeForIcs(slot) {
+  return `${getRideMeetTime(slot).replace(":", "")}00`;
+}
+
+function getCrewNames() {
+  return state.riders.filter(Boolean).join(", ");
+}
+
+const rsvpStates = ["", "in", "maybe", "out", "late"];
+const rsvpLabels = {
+  "": "Set",
+  in: "In",
+  maybe: "Maybe",
+  out: "Out",
+  late: "Late",
+};
+
+function getRsvp(key, riderIndex) {
+  return state.rsvps[key]?.[riderIndex] || "";
+}
+
+function cycleRsvp(key, riderIndex) {
+  const current = getRsvp(key, riderIndex);
+  const next = rsvpStates[(rsvpStates.indexOf(current) + 1) % rsvpStates.length];
+  state.rsvps[key] = state.rsvps[key] || {};
+  if (next) {
+    state.rsvps[key][riderIndex] = next;
+  } else {
+    delete state.rsvps[key][riderIndex];
+  }
+  saveRsvps();
+}
+
+function getRsvpSummary(route) {
+  const scheduled = getSelectedScheduleSlot(route.id);
+  if (!scheduled) return "RSVP in WhatsApp.";
+  const key = rideKey(scheduled.slot);
+  return state.riders
+    .map((name, index) => `${name || defaultRiders[index]}: ${rsvpLabels[getRsvp(key, index)]}`)
+    .join(" | ");
+}
+
+function buildWhatsAppText(route) {
+  const scheduled = getSelectedScheduleSlot(route.id);
+  const note = scheduled ? getRidePlanNote(scheduled.slot) : "";
+  const when = scheduled
+    ? `${scheduled.slot.day}, ${formatRideDate(scheduled.slot)} at ${getRideMeetTime(scheduled.slot)}`
+    : "summer 2026";
+  const lines = [
+    `Ride plan for ${getCrewNames()}: ${route.name}`,
+    `${when} - meet at ${scheduled ? getRideMeetSpot(scheduled.slot) : state.preferences.meetSpot}`,
+    `${route.miles} approx mi, ${route.energy}, ${route.surface}`,
+    `Stops: ${route.stops.join(", ")}`,
+    `RSVP: ${getRsvpSummary(route)}`,
+  ];
+  if (note) lines.push(`Plan note: ${note}`);
+  lines.push(`Track on Strava after the ride. Plan: ${buildRouteUrl(route.id)}`);
+  return lines.join("\n");
+}
+
+function getWhatsAppUrl(route) {
+  return `https://wa.me/?text=${encodeURIComponent(buildWhatsAppText(route))}`;
+}
+
+function getStravaUploadUrl() {
+  return state.preferences.stravaClub.startsWith("http")
+    ? state.preferences.stravaClub
+    : "https://www.strava.com/upload/select";
 }
 
 function pad(number) {
@@ -225,18 +616,28 @@ function escapeIcsText(text) {
     .replace(/\n/g, "\\n");
 }
 
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function buildCalendarIcs() {
   const events = schedule.flatMap((week) =>
-    Object.entries(week.rides).map(([day, routeId]) => {
-      const route = routeById.get(routeId);
-      const date = getRideDate(week.start, day);
-      const startTime = rideStartTimes[day];
+    week.slots.map((slot) => {
+      const route = routeById.get(slot.routeId);
+      const date = getRideDate(slot);
+      const startTime = getRideStartTimeForIcs(slot);
       const start = formatIcsDate(date, startTime);
       const end = addMinutesToIcs(date, startTime, route.minutes);
-      const description = `${route.miles} approximate miles. ${route.note} Stops: ${route.stops.join(", ")}. Check official sources before rolling.`;
+      const planNote = getRidePlanNote(slot);
+      const description = `${route.miles} approximate miles. ${route.note} Meet at ${getRideMeetSpot(slot)}. ${planNote ? `${planNote} ` : ""}Track on Strava. Stops: ${route.stops.join(", ")}. Check official sources before rolling.`;
       return [
         "BEGIN:VEVENT",
-        `UID:gopher-summer-rides-${week.week}-${day}-${route.id}@gopher-summer-rides`,
+        `UID:gopher-summer-rides-${slot.date}-${route.id}@gopher-summer-rides`,
         `DTSTAMP:20260507T000000Z`,
         `DTSTART;TZID=America/Chicago:${start}`,
         `DTEND;TZID=America/Chicago:${end}`,
@@ -277,8 +678,8 @@ function renderWeek() {
   const week = getWeekForDate(dateInput.value);
   weekLabel.textContent = `Week ${week.week} / ${weekThemes[week.week]}`;
   const allowedEnergy = energyFilter.value;
-  const entries = Object.entries(week.rides)
-    .map(([day, routeId]) => ({ day, route: routeById.get(routeId) }))
+  const entries = week.slots
+    .map((slot) => ({ slot, route: routeById.get(slot.routeId) }))
     .filter(({ route }) => allowedEnergy === "all" || route.energy === allowedEnergy);
 
   if (!entries.length) {
@@ -292,21 +693,32 @@ function renderWeek() {
   }
 
   weekRides.innerHTML = entries
-    .map(({ day, route }) => {
-      const key = rideKey(week.week, day, route.id);
-      const done = state.completed.has(key);
+    .map(({ slot, route }) => {
+      const key = rideKey(slot);
+      const done = isRideDone(slot);
       return `
         <article class="ride-card">
-          <div class="day-pill">${day}</div>
-          <button type="button" class="route-select-link" data-route="${route.id}">
-            <h3>${route.name}</h3>
-            <p class="meta-line">
-              <span>${route.miles} approx mi</span>
-              <span>${route.surface}</span>
-              <span class="badge">${route.energy}</span>
-            </p>
-          </button>
-          <button class="ride-action ${done ? "is-done" : ""}" type="button" data-done-key="${key}" title="Toggle done" aria-label="Mark ${route.name} ${done ? "incomplete" : "complete"}" aria-pressed="${done}">
+          <div class="day-pill">${slot.label}</div>
+          <div class="ride-main">
+            <button type="button" class="route-select-link" data-route="${route.id}">
+              <h3>${route.name}</h3>
+              <p class="meta-line">
+                <span>${route.miles} approx mi</span>
+                <span>${route.surface}</span>
+                <span class="badge">${route.energy}</span>
+              </p>
+            </button>
+            <div class="rsvp-row" aria-label="${route.name} RSVPs">
+              ${state.riders
+                .map((name, index) => {
+                  const status = getRsvp(key, index);
+                  const label = rsvpLabels[status];
+                  return `<button class="rsvp-chip ${status ? `is-${status}` : ""}" type="button" data-rsvp-key="${key}" data-rider-index="${index}" aria-label="${name || defaultRiders[index]} RSVP ${label}">${name || defaultRiders[index]}: ${label}</button>`;
+                })
+                .join("")}
+            </div>
+          </div>
+          <button class="ride-action ${done ? "is-done" : ""}" type="button" data-done-key="${key}" data-done-route="${route.id}" title="Toggle done" aria-label="Mark ${route.name} ${done ? "incomplete" : "complete"}" aria-pressed="${done}">
             <i data-lucide="${done ? "check" : "circle"}"></i>
           </button>
         </article>
@@ -321,22 +733,22 @@ function renderSchedule() {
   const currentWeek = getWeekForDate(dateInput.value).week;
   scheduleList.innerHTML = schedule
     .map((week) => {
-      const rows = Object.entries(week.rides)
-        .map(([day, routeId]) => {
-          const route = routeById.get(routeId);
-          const key = rideKey(week.week, day, route.id);
+      const rows = week.slots
+        .map((slot) => {
+          const route = routeById.get(slot.routeId);
+          const key = rideKey(slot);
           return `
             <button type="button" class="week-row" data-route="${route.id}">
-              <span>${day}</span>
-              <strong>${route.name}</strong>
-              <span>${state.completed.has(key) ? "Done" : `${formatRideDate(week.start, day)} - ${route.miles} mi`}</span>
+              <span>${slot.label}</span>
+              <strong>${route.name}${slot.isFinale ? ' <span class="finale-pill">Finale</span>' : ""}</strong>
+              <span>${isRideDone(slot) ? "Done" : `${formatRideDate(slot)} - ${route.miles} mi`}</span>
             </button>
           `;
         })
         .join("");
       return `
         <article class="schedule-week ${week.week === currentWeek ? "is-current" : ""}">
-          <h3>Week ${week.week} <span class="meta-line">${formatWeekRange(week.start)} - ${weekThemes[week.week]}</span></h3>
+          <h3>Week ${week.week} <span class="meta-line">${formatWeekRange(week)} - ${weekThemes[week.week] || "Adaptive picks"}</span></h3>
           <div class="week-grid">${rows}</div>
         </article>
       `;
@@ -365,19 +777,17 @@ function renderRoutes() {
 }
 
 function renderStats() {
-  const completedDetails = [...state.completed]
-    .map((key) => {
-      const routeId = key.split("-").slice(2).join("-");
-      return routeById.get(routeId);
-    })
+  const completedDetails = [...getCompletedRouteIds()]
+    .map((routeId) => routeById.get(routeId))
     .filter(Boolean);
 
   const totalMiles = completedDetails.reduce((sum, route) => sum + route.miles, 0);
   const longest = completedDetails.reduce((max, route) => Math.max(max, route.miles), 0);
-  const percent = Math.round((state.completed.size / totalScheduledRides) * 100);
-  doneCount.textContent = `${state.completed.size}/${totalScheduledRides} done`;
+  const completedCount = completedDetails.length;
+  const percent = Math.round((completedCount / totalScheduledRides) * 100);
+  doneCount.textContent = `${completedCount}/${totalScheduledRides} done`;
   milesDone.textContent = totalMiles;
-  ridesDone.textContent = state.completed.size;
+  ridesDone.textContent = completedCount;
   longestRide.textContent = longest;
   seasonProgress.textContent = `${percent}%`;
   meterFill.style.width = `${Math.min(100, percent)}%`;
@@ -404,8 +814,11 @@ function renderAchievements(completedDetails, totalMiles, longest) {
 
 function renderSelectedRoute() {
   const route = routeById.get(state.selectedRouteId);
-  const slot = getSelectedScheduleSlot(route.id);
-  const scheduledText = slot ? `${slot.day}, ${formatRideDate(slot.week.start, slot.day)}` : "Backup ride";
+  const scheduled = getSelectedScheduleSlot(route.id);
+  const scheduledText = scheduled ? `${scheduled.slot.label}, ${formatRideDate(scheduled.slot)}` : "Backup ride";
+  const rideOverride = scheduled ? state.rideOverrides[scheduled.slot.id] || {} : {};
+  const meetTime = scheduled ? getRideMeetTime(scheduled.slot) : state.preferences.weeknightTime;
+  const meetSpot = scheduled ? getRideMeetSpot(scheduled.slot) : state.preferences.meetSpot;
   const routeSources = (route.sourceKeys || [])
     .map((key) => sources[key])
     .filter(Boolean);
@@ -426,15 +839,47 @@ function renderSelectedRoute() {
     <div>
       <p class="eyebrow">${scheduledText}</p>
       <div class="stop-list">${route.stops.map((stop) => `<span>${stop}</span>`).join("")}</div>
+      <div class="ride-ops">
+        <div>
+          <span>Meet</span>
+          <strong data-selected-meet-time>${escapeHtml(meetTime)}</strong>
+        </div>
+        <div>
+          <span>Spot</span>
+          <strong data-selected-meet-spot>${escapeHtml(meetSpot)}</strong>
+        </div>
+        <div>
+          <span>Track</span>
+          <strong>${state.preferences.stravaClub ? "Club" : "Strava"}</strong>
+        </div>
+      </div>
+      ${
+        scheduled
+          ? `<div class="ride-customizer" aria-label="Ride setup">
+              <label>
+                <span>Meet time</span>
+                <input type="time" data-ride-override="time" data-slot-id="${scheduled.slot.id}" value="${escapeHtml(rideOverride.time || meetTime)}" />
+              </label>
+              <label>
+                <span>Meet spot</span>
+                <input type="text" data-ride-override="spot" data-slot-id="${scheduled.slot.id}" value="${escapeHtml(rideOverride.spot || meetSpot)}" />
+              </label>
+              <label class="ride-note-field">
+                <span>Plan note</span>
+                <textarea data-ride-override="note" data-slot-id="${scheduled.slot.id}" rows="2" placeholder="Snacks, late start, lock plan">${escapeHtml(rideOverride.note || "")}</textarea>
+              </label>
+            </div>`
+          : ""
+      }
       <div class="action-grid">
-        <button class="inline-action" type="button" data-copy-ride="${route.id}">
-          <i data-lucide="messages-square"></i>
-          Copy ride text
-        </button>
-        <button class="inline-action" type="button" data-copy-route-link="${route.id}">
-          <i data-lucide="link"></i>
-          Copy route link
-        </button>
+        <a class="inline-action action-whatsapp" href="${getWhatsAppUrl(route)}" target="_blank" rel="noopener noreferrer">
+          <i data-lucide="message-circle"></i>
+          Send to WhatsApp
+        </a>
+        <a class="inline-action action-strava" href="${getStravaUploadUrl()}" target="_blank" rel="noopener noreferrer">
+          <i data-lucide="activity"></i>
+          Open Strava
+        </a>
         <a class="inline-action" href="${getGoogleMapsUrl(route)}" target="_blank" rel="noopener noreferrer">
           <i data-lucide="map-pin"></i>
           Map search
@@ -558,12 +1003,14 @@ function initEvents() {
     const doneButton = event.target.closest("[data-done-key]");
     const tabButton = event.target.closest("[data-tab]");
     const vibeButton = event.target.closest("[data-vibe]");
-    const copyRideButton = event.target.closest("[data-copy-ride]");
-    const copyRouteLinkButton = event.target.closest("[data-copy-route-link]");
+    const rsvpButton = event.target.closest("[data-rsvp-key]");
 
     if (doneButton) {
       const key = doneButton.dataset.doneKey;
-      if (state.completed.has(key)) {
+      const routeId = doneButton.dataset.doneRoute;
+      const existingKeys = [...state.completed].filter((completedKey) => routeIdFromRideKey(completedKey) === routeId);
+      if (state.completed.has(key) || existingKeys.length) {
+        existingKeys.forEach((completedKey) => state.completed.delete(completedKey));
         state.completed.delete(key);
       } else {
         state.completed.add(key);
@@ -573,14 +1020,10 @@ function initEvents() {
       return;
     }
 
-    if (copyRideButton) {
-      const route = routeById.get(copyRideButton.dataset.copyRide);
-      copyText(buildRideText(route), "Ride text copied.");
-      return;
-    }
-
-    if (copyRouteLinkButton) {
-      copyText(buildRouteUrl(copyRouteLinkButton.dataset.copyRouteLink), "Route link copied.");
+    if (rsvpButton) {
+      cycleRsvp(rsvpButton.dataset.rsvpKey, rsvpButton.dataset.riderIndex);
+      renderWeek();
+      renderSelectedRoute();
       return;
     }
 
@@ -629,12 +1072,14 @@ function initEvents() {
     renderWeek();
     updateUrlState();
   });
+  document.body.addEventListener("input", (event) => {
+    const overrideInput = event.target.closest("[data-ride-override]");
+    if (!overrideInput) return;
+    updateRideOverride(overrideInput.dataset.slotId, overrideInput.dataset.rideOverride, overrideInput.value);
+  });
 
   document.querySelector("#downloadCalendarButton").addEventListener("click", downloadCalendar);
-
-  document.querySelector("#copyLiveLinkButton").addEventListener("click", () => {
-    copyText("https://sri299792458.github.io/gopher-summer-rides/", "Live link copied.");
-  });
+  document.querySelector("#refreshPlanButton").addEventListener("click", refreshUpcomingPlan);
 
   document.querySelector("#randomRideButton").addEventListener("click", () => {
     const pool = energyFilter.value === "all" ? routes : routes.filter((route) => route.energy === energyFilter.value);
@@ -649,15 +1094,28 @@ function initEvents() {
   });
 
   riderInputs.forEach((input, index) => {
-    input.value = state.riders[index] || `Student ${index + 1}`;
+    input.value = state.riders[index] || defaultRiders[index];
     input.addEventListener("input", () => {
       state.riders[index] = input.value;
       saveRiders();
+      renderSelectedRoute();
+    });
+  });
+
+  Object.entries(preferenceInputs).forEach(([key, input]) => {
+    input.value = state.preferences[key] || "";
+    input.addEventListener("input", () => {
+      state.preferences[key] = input.value;
+      savePreferences();
+      renderSelectedRoute();
     });
   });
 }
 
 function boot() {
+  refreshSchedule({ preserve: true });
+  dateInput.min = formatDateValue(summerStart);
+  dateInput.max = formatDateValue(summerEnd);
   const params = getInitialParams();
   const today = clampDate(new Date());
   dateInput.value = params.date || formatDateValue(today);
@@ -665,7 +1123,16 @@ function boot() {
   if (["all", "easy", "steady", "big"].includes(params.energy)) energyFilter.value = params.energy;
   if (params.route && routeById.has(params.route)) state.selectedRouteId = params.route;
   if (params.vibe && ["all", "water", "city", "green", "destination"].includes(params.vibe)) state.activeVibe = params.vibe;
-  if (params.tab && ["schedule", "routes", "crew", "share"].includes(params.tab)) state.activeTab = params.tab;
+  if (params.tab && ["schedule", "routes", "crew"].includes(params.tab)) state.activeTab = params.tab;
+  if (state.riders.join("|") === "Student 1|Student 2|Student 3") {
+    state.riders = defaultRiders;
+    saveRiders();
+  }
+  if (state.preferences.weeknightTime === "18:00" || state.preferences.saturdayTime === "10:00") {
+    if (state.preferences.weeknightTime === "18:00") state.preferences.weeknightTime = defaultPreferences.weeknightTime;
+    if (state.preferences.saturdayTime === "10:00") state.preferences.saturdayTime = defaultPreferences.saturdayTime;
+    savePreferences();
+  }
   initMap();
   initEvents();
   renderAll();

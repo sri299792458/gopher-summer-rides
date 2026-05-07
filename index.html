@@ -29,7 +29,7 @@
         <section class="control-strip" aria-label="Ride controls">
           <label class="field">
             <span>Date</span>
-            <input id="dateInput" type="date" min="2026-05-18" max="2026-08-09" />
+            <input id="dateInput" type="date" min="2026-05-08" max="2026-08-08" />
           </label>
           <label class="field">
             <span>Energy</span>
@@ -69,17 +69,17 @@
             <i data-lucide="users"></i>
             Crew
           </button>
-          <button class="tab" id="shareTab" role="tab" aria-selected="false" aria-controls="sharePanel" type="button" data-tab="share">
-            <i data-lucide="share-2"></i>
-            Share
-          </button>
         </nav>
 
         <main class="tab-panels">
           <section class="tab-panel is-active" id="schedulePanel" role="tabpanel" aria-labelledby="scheduleTab" aria-label="Full summer schedule">
             <div class="panel-title-row">
-              <h2>36 unique rides</h2>
+              <h2>Adaptive queue</h2>
               <div class="button-row">
+                <button class="text-button" id="refreshPlanButton" type="button">
+                  <i data-lucide="refresh-cw"></i>
+                  Refresh
+                </button>
                 <button class="text-button" id="downloadCalendarButton" type="button">
                   <i data-lucide="calendar-plus"></i>
                   Calendar
@@ -113,15 +113,33 @@
             <div class="crew-grid">
               <label class="crew-member">
                 <span>Rider 1</span>
-                <input id="riderOne" type="text" value="Student 1" />
+                <input id="riderOne" type="text" value="Sri" />
               </label>
               <label class="crew-member">
                 <span>Rider 2</span>
-                <input id="riderTwo" type="text" value="Student 2" />
+                <input id="riderTwo" type="text" value="Apurv" />
               </label>
               <label class="crew-member">
                 <span>Rider 3</span>
-                <input id="riderThree" type="text" value="Student 3" />
+                <input id="riderThree" type="text" value="Ayaan" />
+              </label>
+            </div>
+            <div class="custom-grid">
+              <label class="crew-member">
+                <span>Weeknight meet</span>
+                <input id="weeknightTime" type="time" value="06:30" />
+              </label>
+              <label class="crew-member">
+                <span>Saturday meet</span>
+                <input id="saturdayTime" type="time" value="06:30" />
+              </label>
+              <label class="crew-member">
+                <span>Meet spot</span>
+                <input id="meetSpot" type="text" value="UMN East Bank" />
+              </label>
+              <label class="crew-member">
+                <span>Strava club</span>
+                <input id="stravaClub" type="url" placeholder="https://www.strava.com/clubs/..." />
               </label>
             </div>
             <div class="status-board">
@@ -148,44 +166,6 @@
             </div>
           </section>
 
-          <section class="tab-panel" id="sharePanel" role="tabpanel" aria-labelledby="shareTab" aria-label="Sharing options" hidden>
-            <div class="panel-title-row">
-              <h2>Share the planner</h2>
-              <span>send a real link</span>
-            </div>
-            <div class="share-grid">
-              <article class="share-card share-card-primary">
-                <h3>Live app link</h3>
-                <p>This is the URL to send your group chat.</p>
-                <code>https://sri299792458.github.io/gopher-summer-rides/</code>
-                <button class="inline-action" id="copyLiveLinkButton" type="button">
-                  <i data-lucide="copy"></i>
-                  Copy link
-                </button>
-              </article>
-              <article class="share-card share-card-primary">
-                <h3>Public share link</h3>
-                <p>Put this project in a GitHub repo, turn on Pages, and send your friends the Pages URL. That link works from anywhere.</p>
-                <code>Settings &gt; Pages &gt; Deploy from branch &gt; main or master &gt; /root</code>
-              </article>
-              <article class="share-card">
-                <h3>Fast option: Netlify Drop</h3>
-                <p>Upload the static site files and Netlify gives you a public link. Include only the files the browser needs.</p>
-                <code>index.html + styles.css + app.js + data/</code>
-              </article>
-              <article class="share-card">
-                <h3>Same-Wi-Fi preview</h3>
-                <p>Temporary test link only. Keep this laptop awake, run the server, then friends on the same Wi-Fi open your laptop's IPv4 address.</p>
-                <code>http://YOUR-IP:4173/</code>
-                <p class="share-warning">Do not send 127.0.0.1 or 0.0.0.0 to friends.</p>
-              </article>
-              <article class="share-card">
-                <h3>Progress is not shared yet</h3>
-                <p>Ride check-offs are local per browser. A shared scoreboard needs a small backend later.</p>
-                <code>localStorage only</code>
-              </article>
-            </div>
-          </section>
         </main>
       </aside>
 

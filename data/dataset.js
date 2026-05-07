@@ -789,20 +789,18 @@ const routes = [
   },
 ];
 
-const schedule = [
-  { week: 1, start: "2026-05-18", rides: { Tue: "campus-coffee", Thu: "nicollet-island-lighthouse", Sat: "stone-arch-boom" } },
-  { week: 2, start: "2026-05-25", rides: { Tue: "bridal-veil-franklin-gorge", Thu: "sheridan-graco-riverfront", Sat: "river-roads" } },
-  { week: 3, start: "2026-06-01", rides: { Tue: "witchs-hat-prospect-park", Thu: "deming-heights-st-anthony", Sat: "grand-rounds-sampler" } },
-  { week: 4, start: "2026-06-08", rides: { Tue: "como-lake", Thu: "silverwood-st-anthony", Sat: "st-paul-riverfront" } },
-  { week: 5, start: "2026-06-15", rides: { Tue: "chain-lakes", Thu: "midtown-greenway", Sat: "full-grand-rounds" } },
-  { week: 6, start: "2026-06-22", rides: { Tue: "minnehaha-falls", Thu: "minnehaha-creek", Sat: "fort-snelling-big-rivers" } },
-  { week: 7, start: "2026-06-29", rides: { Tue: "cedar-kenilworth", Thu: "north-mississippi-webber", Sat: "hidden-falls-crosby" } },
-  { week: 8, start: "2026-07-06", rides: { Tue: "nokomis-river", Thu: "ford-highland-bridge", Sat: "gateway-stillwater" } },
-  { week: 9, start: "2026-07-13", rides: { Tue: "luce-line-east", Thu: "lake-phalen-eastside", Sat: "luce-line-long" } },
-  { week: 10, start: "2026-07-20", rides: { Tue: "summit-cathedral-loop", Thu: "capital-city-harriet-island", Sat: "browns-creek" } },
-  { week: 11, start: "2026-07-27", rides: { Tue: "bruce-vento-swede-hollow", Thu: "nine-mile-creek", Sat: "lake-minnetonka" } },
-  { week: 12, start: "2026-08-03", rides: { Tue: "elm-rush-creek", Thu: "lebanon-hills", Sat: "dakota-rail" } },
-];
+const schedulePlan = {
+  seasonStart: "2026-05-08",
+  cadence: ["Tue", "Thu", "Sat"],
+  weekSize: 3,
+  finaleRouteId: "full-grand-rounds",
+  finaleDay: "Sat",
+  finaleRestDays: 14,
+  kickoff: [
+    { date: "2026-05-08", routeId: "campus-coffee" },
+    { date: "2026-05-09", routeId: "stone-arch-boom" },
+  ],
+};
 
 const sources = {
   minneapolisParks: {
@@ -951,4 +949,4 @@ routes.forEach((route) => {
   route.lastVerified = "2026-05-07";
 });
 
-window.RIDE_DATA = { routes, schedule, sources };
+window.RIDE_DATA = { routes, schedulePlan, sources };

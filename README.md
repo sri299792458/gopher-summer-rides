@@ -1,6 +1,6 @@
 # Gopher Summer Rides
 
-A small static web app for three University of Minnesota students who want summer 2026 bike rides chosen ahead of time. The default plan now uses 36 distinct route ideas across 12 weeks.
+A small static web app for Sri, Apurv, and Ayaan to keep summer 2026 bike rides moving without re-deciding everything from scratch. The planner uses an adaptive queue of 36 distinct route ideas across 12 weeks.
 
 Live site: https://sri299792458.github.io/gopher-summer-rides/
 
@@ -11,18 +11,23 @@ The local dataset lives in `data/dataset.js`.
 - Route distances are approximate planned ride distances.
 - Route shapes are approximate waypoint sketches for map visualization, not turn-by-turn navigation.
 - Official trail and status links are included through route-level source keys.
-- The 12-week schedule covers May 18, 2026 through August 9, 2026.
-- Each scheduled ride uses a different route id by default.
+- The generated queue starts May 8, 2026 and reserves the final ride for the Full Grand Rounds Attempt.
+- Dates come from a kickoff plus a Tue/Thu/Sat cadence; unfinished upcoming route picks can be refreshed without changing completed rides.
 
 Primary sources include Minneapolis Park and Recreation Board, Three Rivers Park District, Dakota County Parks, Minnesota DNR, and OpenStreetMap attribution for the basemap.
 
 ## Features
 
-- 36 distinct summer rides with a Tue/Thu/Sat rhythm.
+- Adaptive 36-ride summer queue with a May 8 kickoff and a Tue/Thu/Sat rhythm.
 - Interactive route sketch map.
 - Vibe and energy filters.
 - Per-browser completion tracking.
-- Group-chat copy text for each ride.
+- WhatsApp ride-plan handoff for Sri, Apurv, and Ayaan.
+- Custom rider names, meet times, meet spot, and Strava club link.
+- Per-ride RSVP chips for quick local planning.
+- Default 6:30 AM meet time with per-ride meet-time, meet-spot, and note overrides.
+- Refreshable upcoming route picks, while completed rides and the Grand Rounds finale stay locked.
+- Strava handoff for post-ride upload or club workflow.
 - `.ics` calendar export for the full summer plan.
 - Official status/source links and route caveats.
 
@@ -74,4 +79,4 @@ http://YOUR-IP:4173/
 
 `127.0.0.1` only works on your own computer. `0.0.0.0` starts the server, but it is not the link to share.
 
-Completion check-offs are currently stored per browser; a shared live scoreboard would need a small backend.
+Names, RSVPs, completed rides, and refreshed route order are currently stored per browser. Code changes to the public site reach everyone after deployment, but live shared crew state would need a small backend or shared cloud document.
