@@ -745,7 +745,7 @@ h3 {
 }
 
 .inline-action {
-  min-height: 36px;
+  min-height: 42px;
   width: 100%;
   text-decoration: none;
 }
@@ -948,6 +948,18 @@ h3 {
   border-color: rgba(200, 107, 40, 0.45);
   background: #fff4eb;
   color: #a34d16;
+}
+
+.action-route-map {
+  border-color: rgba(47, 128, 160, 0.35);
+  background: #eef7fb;
+  color: var(--river);
+}
+
+.action-route-map.has-exact-route {
+  border-color: rgba(39, 122, 99, 0.42);
+  background: #eff6f3;
+  color: var(--green);
 }
 
 .action-strava-club {

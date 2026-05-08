@@ -900,6 +900,19 @@ function getGoogleMapsUrl(route) {
   return `https://www.google.com/maps/search/?api=1&query=${query}&query_place_id=&center=${lat},${lng}`;
 }
 
+function getExactRouteUrl(route) {
+  return normalizeExternalUrl(route.link);
+}
+
+function getRouteMapAction(route) {
+  const exactUrl = getExactRouteUrl(route);
+  return {
+    url: exactUrl || getGoogleMapsUrl(route),
+    label: exactUrl ? "Open route map" : "Map search",
+    exact: Boolean(exactUrl),
+  };
+}
+
 function getRideMeetTime(slotOrDay) {
   const day = typeof slotOrDay === "string" ? slotOrDay : slotOrDay.day;
   const override = typeof slotOrDay === "string" ? null : state.rideOverrides[slotOrDay.id];
@@ -1007,6 +1020,7 @@ function getRsvpSummary(route) {
 function buildWhatsAppText(route) {
   const scheduled = getSelectedScheduleSlot(route.id);
   const note = scheduled ? getRidePlanNote(scheduled.slot) : "";
+  const routeMapUrl = getExactRouteUrl(route);
   const when = scheduled
     ? `${scheduled.slot.day}, ${formatRideDate(scheduled.slot)} at ${getRideMeetTime(scheduled.slot)}`
     : "summer 2026";
@@ -1018,6 +1032,7 @@ function buildWhatsAppText(route) {
     `RSVP: ${getRsvpSummary(route)}`,
   ];
   if (note) lines.push(`Plan note: ${note}`);
+  if (routeMapUrl) lines.push(`Route map: ${routeMapUrl}`);
   if (getPhotosAlbumUrl()) lines.push(`Photos: ${getPhotosAlbumUrl()}`);
   lines.push(`Track on Strava after the ride. Plan: ${buildRouteUrl(route.id)}`);
   return lines.join("\n");
@@ -1308,10 +1323,15 @@ function renderSelectedRoute() {
   const rideOverride = scheduled ? state.rideOverrides[scheduled.slot.id] || {} : {};
   const meetTime = scheduled ? getRideMeetTime(scheduled.slot) : state.preferences.weeknightTime;
   const meetSpot = scheduled ? getRideMeetSpot(scheduled.slot) : state.preferences.meetSpot;
+  const routeMapAction = getRouteMapAction(route);
+  const exactRouteUrl = getExactRouteUrl(route);
   const routeSources = (route.sourceKeys || [])
     .map((key) => sources[key])
     .filter(Boolean);
-  const learnMoreLinks = (route.learnMore || []).filter((link) => link && normalizeExternalUrl(link.url));
+  const learnMoreLinks = (route.learnMore || []).filter((link) => {
+    const url = link && normalizeExternalUrl(link.url);
+    return url && url !== exactRouteUrl;
+  });
   const caveat = route.caveat ? `<p class="route-caveat">${escapeHtml(route.caveat)}</p>` : "";
   const mapNote = route.custom ? '<p class="route-caveat">Custom route map is approximate unless the route link has exact navigation.</p>' : "";
   selectedTitle.textContent = route.name;
@@ -1389,13 +1409,13 @@ function renderSelectedRoute() {
           <i data-lucide="message-circle"></i>
           Send to WhatsApp
         </a>
+        <a class="inline-action action-route-map ${routeMapAction.exact ? "has-exact-route" : ""}" href="${escapeHtml(routeMapAction.url)}" target="_blank" rel="noopener noreferrer">
+          <i data-lucide="${routeMapAction.exact ? "navigation" : "map-pin"}"></i>
+          ${routeMapAction.label}
+        </a>
         <a class="inline-action action-strava" href="${getStravaLaunchUrl()}" data-strava-launch>
           <i data-lucide="activity"></i>
           Start Strava
-        </a>
-        <a class="inline-action" href="${getGoogleMapsUrl(route)}" target="_blank" rel="noopener noreferrer">
-          <i data-lucide="map-pin"></i>
-          Map search
         </a>
         ${
           getPhotosAlbumUrl()
