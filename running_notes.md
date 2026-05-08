@@ -156,3 +156,19 @@ Route geometry is approximate waypoint geometry for planning and visualization, 
 - Added a Strava launch action directly to the next-ride strip so the morning flow has map, WhatsApp, and tracking from the first card.
 - Reused the existing app-only Strava handoff with no web fallback, keeping the previous mobile-login fix intact.
 - Bumped the static asset version for GitHub Pages.
+
+## Completion audit
+
+Objective restated as deliverables: a polished mobile-first shared ride companion for Sri, Apurv, and Ayaan for Summer 2026 with dynamic Twin Cities route discovery, synced crew planning, editable meet logistics, custom route ideas, WhatsApp coordination, Strava post-ride logging, and reliable GitHub Pages delivery.
+
+- Sri/Apurv/Ayaan + Summer 2026: README names the three riders, defaults are `["Sri", "Apurv", "Ayaan"]`, schedule starts May 8, 2026, and the app title/header targets UMN summer 2026.
+- Dynamic Twin Cities route discovery: `data/dataset.js` has 36 routes, official source keys, route caveats, OpenStreetMap attribution, and route-level `learnMore` links; app includes search, vibe/energy filters, adaptive route refresh, Swap, Unpin, and a locked Full Grand Rounds finale.
+- Synced crew planning: Crew Sync state includes riders, preferences, completed rides, RSVPs, plan assignments, pins, overrides, custom routes, and activity links; app shows connected/saving/last-sync status and pulls on interval, resume, focus, and reconnect.
+- Editable meet logistics: selected scheduled routes expose meet time, meet spot, and plan note overrides; defaults keep the usual 6:30 AM meet time.
+- Custom route ideas: route idea form supports route name, distance, optional auto-estimated minutes, energy/vibe, start/surface/stops/note, exact map link, deletion, shared sync, and "Use next ride" planning.
+- WhatsApp coordination: next ride and selected route actions build WhatsApp ride text with timing, meet spot, map/plan link, Photos link when configured, and Strava reminder.
+- Strava workflow: next ride and selected route actions launch the Strava app only; selected route panel accepts manual Strava activity links; Crew ride log shows completed rides and saved Strava links.
+- Reliable GitHub Pages: assets are cache-versioned, share links generated from local preview use the public Pages URL, README documents sharing/deployment, `tools/smoke-check.mjs` covers mobile-critical DOM hooks, dataset integrity, share fallback, schedule assumptions, sync resume hooks, and next ride actions.
+- Verification evidence: `node tools\smoke-check.mjs` passed, `node --check app.js` passed, `node --check data\dataset.js` passed, `git diff --check` passed, and the public GitHub Pages app booted with title, selected route, next ride actions, route search, custom route form, sync status, and zero public-host console errors.
+
+Residual risks: route geometry and distances remain planning approximations, Strava import is intentionally manual rather than OAuth/backend-based, and Crew Sync remains link-based access control. These are documented product choices rather than blockers for the stated objective.
