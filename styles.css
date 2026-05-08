@@ -778,6 +778,13 @@ h3 {
   margin: 0;
 }
 
+.sync-card .sync-detail {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
 .sync-card p {
   margin-top: 4px;
   color: var(--muted);

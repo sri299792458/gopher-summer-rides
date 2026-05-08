@@ -124,3 +124,4 @@ Route geometry is approximate waypoint geometry for planning and visualization, 
 - Reliability follow-up: unplanned custom route ideas remain valid library ideas and no longer make the schedule validator expect every custom idea to appear in the summer queue.
 - Morning-use follow-up: the top planner now shows a next-ride strip with the upcoming unfinished ride, meet details, route map action, and WhatsApp handoff before the longer weekly list.
 - Post-ride follow-up: Crew board now includes a ride log that lists completed rides and opens saved Strava activity links from one place.
+- Sync confidence follow-up: Crew Sync now shows autosave/saving, last-sync time, and auto-check cadence so cross-device edits feel less mysterious.

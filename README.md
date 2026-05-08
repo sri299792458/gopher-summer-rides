@@ -38,6 +38,7 @@ Primary sources include Minneapolis Park and Recreation Board, Three Rivers Park
 - Refreshable upcoming route picks, while completed rides and the Grand Rounds finale stay locked.
 - Strava app handoff for starting a recording, plus an optional separate club link.
 - Shared crew sync link for names, settings, RSVPs, completed rides, route queue, ride overrides, custom routes, and saved activity links.
+- Crew Sync shows autosave, last-sync, and auto-check status so shared edits feel traceable.
 - Optional private Photos album link saved in crew settings instead of hard-coded into the public site.
 - `.ics` calendar export for the full summer plan.
 - Route-specific learn-more links for local history, ride previews, blogs, articles, and videos.

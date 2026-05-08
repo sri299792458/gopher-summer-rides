@@ -173,6 +173,7 @@ const customRouteInputs = {
   link: document.querySelector("#customRouteLink"),
 };
 const syncStatus = document.querySelector("#syncStatus");
+const syncDetail = document.querySelector("#syncDetail");
 const startSyncButton = document.querySelector("#startSyncButton");
 const copySyncLinkButton = document.querySelector("#copySyncLinkButton");
 const pullSyncButton = document.querySelector("#pullSyncButton");
@@ -550,11 +551,29 @@ function getSyncLink() {
   return url.toString();
 }
 
+function formatSyncTime(timestamp) {
+  const date = new Date(Number(timestamp));
+  if (!Number.isFinite(date.getTime())) return "";
+  return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+}
+
+function getSyncDetailText(tone) {
+  if (!syncState.id) return "Start sync once, then share the link with Apurv and Ayaan.";
+  if (tone === "busy") return "Saving shared changes; friends will see them after the next sync check.";
+  if (tone === "error") return "Keep this tab open and use Pull when the connection is back.";
+  const syncedAt = formatSyncTime(syncState.lastRemoteUpdatedAt);
+  const intervalSeconds = Math.round(syncPollMs / 1000);
+  return syncedAt
+    ? `Auto-checking every ${intervalSeconds} sec. Last sync ${syncedAt}.`
+    : `Auto-checking every ${intervalSeconds} sec once connected.`;
+}
+
 function updateSyncControls(message, tone = "idle") {
   if (!syncStatus) return;
   const isConnected = Boolean(syncState.id);
   syncStatus.textContent = message || (isConnected ? "Crew sync connected" : "Local only");
   syncStatus.dataset.tone = tone;
+  if (syncDetail) syncDetail.textContent = getSyncDetailText(tone);
   if (startSyncButton) {
     startSyncButton.disabled = isConnected || syncState.busy;
     startSyncButton.innerHTML = `<i data-lucide="cloud"></i>${isConnected ? "Sync on" : "Start sync"}`;
@@ -675,6 +694,7 @@ async function pushCrewSyncNow() {
 function queueSyncPush() {
   if (!syncState.id || syncState.applyingRemote || !syncState.ready) return;
   window.clearTimeout(syncState.saveTimer);
+  updateSyncControls("Saving crew changes...", "busy");
   syncState.saveTimer = window.setTimeout(() => {
     pushCrewSyncNow().catch((error) => {
       updateSyncControls("Sync failed. Pull or retry.", "error");
