@@ -12,7 +12,7 @@
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       crossorigin=""
     />
-    <link rel="stylesheet" href="styles.css?v=20260508-ride-cockpit" />
+    <link rel="stylesheet" href="styles.css?v=20260508-custom-routes-2" />
   </head>
   <body>
     <div class="app-shell">
@@ -47,7 +47,7 @@
           <div class="section-heading">
             <div>
               <p class="eyebrow" id="weekLabel">Week 1</p>
-              <h2 id="todayTitle">This week’s rides</h2>
+              <h2 id="todayTitle">This week</h2>
             </div>
             <div class="season-meter" aria-label="Summer completion">
               <span id="seasonProgress">0%</span>
@@ -78,7 +78,7 @@
         <nav class="tab-list" role="tablist" aria-label="Planner views">
           <button class="tab is-active" id="scheduleTab" role="tab" aria-selected="true" aria-controls="schedulePanel" type="button" data-tab="schedule">
             <i data-lucide="calendar-days"></i>
-            Plan
+            Schedule
           </button>
           <button class="tab" id="routesTab" role="tab" aria-selected="false" aria-controls="routesPanel" type="button" data-tab="routes">
             <i data-lucide="map"></i>
@@ -93,7 +93,7 @@
         <main class="tab-panels">
           <section class="tab-panel is-active" id="schedulePanel" role="tabpanel" aria-labelledby="scheduleTab" aria-label="Full summer schedule">
             <div class="panel-title-row">
-              <h2>Summer plan</h2>
+              <h2>Adaptive queue</h2>
               <div class="button-row">
                 <button class="text-button" id="refreshPlanButton" type="button">
                   <i data-lucide="refresh-cw"></i>
@@ -111,7 +111,7 @@
 
           <section class="tab-panel" id="routesPanel" role="tabpanel" aria-labelledby="routesTab" aria-label="Route library" hidden>
             <div class="panel-title-row">
-              <h2>Explore routes</h2>
+              <h2>Route library</h2>
               <span id="routeCount"></span>
             </div>
             <div class="route-filter-row" role="group" aria-label="Route type filters">
@@ -124,7 +124,7 @@
             <details class="custom-route-panel">
               <summary>
                 <i data-lucide="plus"></i>
-                Add route idea
+                Add custom route
               </summary>
               <form class="custom-route-form" id="customRouteForm">
                 <label class="crew-member">
@@ -274,7 +274,7 @@
       crossorigin=""
     ></script>
     <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.js"></script>
-    <script src="data/dataset.js?v=20260508-ride-cockpit"></script>
-    <script src="app.js?v=20260508-ride-cockpit"></script>
+    <script src="data/dataset.js?v=20260508-custom-routes-2"></script>
+    <script src="app.js?v=20260508-custom-routes-2"></script>
   </body>
 </html>
