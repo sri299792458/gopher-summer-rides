@@ -84,6 +84,8 @@ check(app.includes('window.addEventListener("online", pullCrewSyncOnResume)'), "
 check(app.includes("data-swap-next-ride"), "app exposes a next-open-ride swap action");
 check(app.includes("data-unpin-next-ride"), "app exposes a next-open-ride unpin action");
 check(app.includes('data-strava-launch aria-label="Start Strava for'), "next ride strip exposes Strava launch");
+check(app.includes("https://www.google.com/maps/dir/"), "built-in map actions open Google Maps directions");
+check(app.includes('travelmode: "bicycling"'), "built-in map actions request bicycling directions");
 check(!app.includes("?.") && !app.includes("??"), "app avoids optional chaining/nullish coalescing for older mobile browsers");
 
 const sandbox = { window: {}, console };
@@ -136,6 +138,8 @@ if (Array.isArray(routes)) {
     ),
     "routes have valid map coordinates",
   );
+  const campusCoffee = routes.find((route) => route.id === "campus-coffee");
+  check(campusCoffee && campusCoffee.coords.length >= 8, "Campus Coffee uses enough waypoints to avoid fake river shortcuts");
   check(routes.filter((route) => Array.isArray(route.learnMore) && route.learnMore.length > 0).length >= 30, "most routes have discovery links");
 }
 

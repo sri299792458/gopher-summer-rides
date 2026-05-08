@@ -1123,9 +1123,20 @@ function planRouteForNextRide(routeId) {
 }
 
 function getGoogleMapsUrl(route) {
-  const [lat, lng] = route.coords[0];
-  const query = encodeURIComponent(`${route.name} ${route.start} Minneapolis Saint Paul MN`);
-  return `https://www.google.com/maps/search/?api=1&query=${query}&query_place_id=&center=${lat},${lng}`;
+  const coords = Array.isArray(route.coords) ? route.coords.filter((point) => Array.isArray(point) && point.length === 2) : [];
+  const fallbackQuery = encodeURIComponent(`${route.name} ${route.start} Minneapolis Saint Paul MN`);
+  if (coords.length < 2) return `https://www.google.com/maps/search/?api=1&query=${fallbackQuery}`;
+
+  const formatCoord = (point) => `${point[0]},${point[1]}`;
+  const params = new URLSearchParams({
+    api: "1",
+    origin: formatCoord(coords[0]),
+    destination: formatCoord(coords[coords.length - 1]),
+    travelmode: "bicycling",
+  });
+  const waypoints = coords.slice(1, -1).map(formatCoord);
+  if (waypoints.length) params.set("waypoints", waypoints.join("|"));
+  return `https://www.google.com/maps/dir/?${params.toString()}`;
 }
 
 function getExactRouteUrl(route) {
@@ -1136,8 +1147,8 @@ function getRouteMapAction(route) {
   const exactUrl = getExactRouteUrl(route);
   return {
     url: exactUrl || getGoogleMapsUrl(route),
-    label: exactUrl ? "Open route map" : "Map search",
-    exact: Boolean(exactUrl),
+    label: exactUrl ? "Open route map" : "Bike directions",
+    exact: true,
   };
 }
 

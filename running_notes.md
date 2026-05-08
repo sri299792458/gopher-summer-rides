@@ -172,3 +172,10 @@ Objective restated as deliverables: a polished mobile-first shared ride companio
 - Verification evidence: `node tools\smoke-check.mjs` passed, `node --check app.js` passed, `node --check data\dataset.js` passed, `git diff --check` passed, and the public GitHub Pages app booted with title, selected route, next ride actions, route search, custom route form, sync status, and zero public-host console errors.
 
 Residual risks: route geometry and distances remain planning approximations, Strava import is intentionally manual rather than OAuth/backend-based, and Crew Sync remains link-based access control. These are documented product choices rather than blockers for the stated objective.
+
+## Route map correction
+
+- User called out that Campus Coffee looked like it magically crossed the river, and that the Map action was useless if it did not open an actual route.
+- Replaced the built-in Google Maps fallback from search URLs to bicycling directions URLs with origin, destination, and route waypoints.
+- Added bridge-approach waypoints to Campus Coffee so the in-app preview no longer draws a fake diagonal river crossing.
+- Updated the smoke check so built-in map actions must keep using Google Maps directions with bicycling mode.

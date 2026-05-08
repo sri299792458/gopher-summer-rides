@@ -22,6 +22,7 @@ Primary sources include Minneapolis Park and Recreation Board, Three Rivers Park
 - Mobile-first layout with the weekly plan, selected route controls, and map optimized for phones.
 - A next-ride strip surfaces the upcoming unfinished ride with map, WhatsApp, and Strava actions.
 - Interactive route sketch map.
+- Built-in route Map buttons open Google Maps bicycling directions with waypoints, not a generic map search.
 - Vibe and energy filters.
 - Route search across names, stops, notes, surfaces, and discovery links.
 - Per-browser completion tracking.

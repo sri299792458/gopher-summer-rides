@@ -496,8 +496,12 @@ const routes = [
     coords: [
       [44.9757, -93.2342],
       [44.9812, -93.2363],
-      [44.9847, -93.2548],
-      [44.9744, -93.244],
+      [44.9846, -93.2464],
+      [44.9829, -93.2541],
+      [44.9774, -93.2519],
+      [44.9727, -93.2442],
+      [44.9736, -93.2375],
+      [44.9705, -93.2362],
       [44.9757, -93.2342],
     ],
   },
@@ -1380,7 +1384,7 @@ routes.forEach((route) => {
   route.caveat = routeCaveats[route.id] || "";
   route.distanceMethod = "Approximate planned ride distance";
   route.geometrySource = "Approximate waypoint sketch over OpenStreetMap basemap";
-  route.geometryPrecision = "Planning only, not turn-by-turn navigation";
+  route.geometryPrecision = "Preview waypoints; Map opens bicycle directions";
   route.lastVerified = "2026-05-07";
 });
 
