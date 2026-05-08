@@ -584,6 +584,26 @@ h3 {
   background: #f3fafc;
 }
 
+.access-note {
+  margin: 14px 0;
+  padding: 12px;
+  border: 1px solid rgba(122, 31, 43, 0.18);
+  border-radius: var(--radius);
+  background: #fff8eb;
+}
+
+.access-note h3,
+.access-note p {
+  margin: 0;
+}
+
+.access-note p {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
 .sync-card h3,
 .sync-card p {
   margin: 0;

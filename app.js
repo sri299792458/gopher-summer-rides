@@ -1247,8 +1247,33 @@ function renderAll() {
 }
 
 function selectRoute(routeId) {
+  if (!routeById.has(routeId)) return;
   state.selectedRouteId = routeId;
   renderSelectedRoute();
+  updateUrlState();
+}
+
+function focusSelectedRoutePanel() {
+  if (!window.matchMedia("(max-width: 960px)").matches) return;
+  document.querySelector(".map-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function pickBackupRide() {
+  const allowedEnergy = energyFilter.value;
+  const completedRouteIds = getCompletedRouteIds();
+  const pool = routes.filter(
+    (route) => route.id !== state.selectedRouteId && (allowedEnergy === "all" || route.energy === allowedEnergy),
+  );
+  const freshPool = pool.filter((route) => !completedRouteIds.has(route.id));
+  const candidates = freshPool.length ? freshPool : pool;
+  if (!candidates.length) {
+    showToast("No backup ride matches that filter.");
+    return;
+  }
+  const next = candidates[Math.floor(Math.random() * candidates.length)];
+  selectRoute(next.id);
+  focusSelectedRoutePanel();
+  showToast(`Backup ride: ${next.name}`);
 }
 
 function setActiveTab(tabName) {
@@ -1384,9 +1409,7 @@ function initEvents() {
   });
 
   document.querySelector("#randomRideButton").addEventListener("click", () => {
-    const pool = energyFilter.value === "all" ? routes : routes.filter((route) => route.energy === energyFilter.value);
-    const next = pool[Math.floor(Math.random() * pool.length)];
-    selectRoute(next.id);
+    pickBackupRide();
   });
 
   document.querySelector("#resetButton").addEventListener("click", () => {

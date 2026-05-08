@@ -82,3 +82,5 @@ Route geometry is approximate waypoint geometry for planning and visualization, 
 - Added Crew Sync via MantleDB so one sync link can share rider names, meet settings, RSVPs, completed rides, adaptive route order, and per-ride overrides across devices.
 - Changed the Photos album handoff to an optional crew setting, not a hard-coded public default. The Photos button still appears after the group adds an album link in the Crew tab.
 - Started a mobile-first layout pass: phone flow is planner header, selected route controls, map, then the longer Schedule/Routes/Crew views; desktop restores the left-planner/right-map split.
+- Clarified access model: Sri shares the sync link with Apurv and Ayaan once; Crew Sync is link-based, and the Photos button is only a shortcut to whatever album privacy Google Photos enforces.
+- Fixed the backup ride button so it chooses a different matching route, updates the URL, shows a toast, and scrolls phones to the selected route panel.
