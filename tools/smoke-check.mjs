@@ -66,6 +66,8 @@ check(versions.size === 1, `local assets share one version (${[...versions].join
   "renderRideLog",
   "getShareBaseUrl",
   "isLocalShareHost",
+  "requestCrewSyncPull",
+  "pullCrewSyncOnResume",
   "planRouteForNextRide",
   "getSyncDetailText",
 ].forEach((functionName) => {
@@ -74,6 +76,8 @@ check(versions.size === 1, `local assets share one version (${[...versions].join
 
 check(app.includes('const publicAppUrl = "https://sri299792458.github.io/gopher-summer-rides/";'), "app keeps the public Pages URL for shared links");
 check(app.includes("syncPollMs = 8000"), "app keeps an automatic sync check cadence");
+check(app.includes('document.addEventListener("visibilitychange", pullCrewSyncOnResume)'), "app refreshes crew sync after tab resume");
+check(app.includes('window.addEventListener("online", pullCrewSyncOnResume)'), "app refreshes crew sync after reconnecting");
 check(!app.includes("?.") && !app.includes("??"), "app avoids optional chaining/nullish coalescing for older mobile browsers");
 
 const sandbox = { window: {}, console };

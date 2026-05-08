@@ -129,6 +129,8 @@ const syncState = {
   lastRemoteUpdatedAt: safeNumberStorage("crewSyncLastUpdatedAt", 0),
   saveTimer: null,
   pollTimer: null,
+  pullInFlight: false,
+  lastPullAttemptAt: 0,
   applyingRemote: false,
   busy: false,
   ready: false,
@@ -578,8 +580,8 @@ function getSyncDetailText(tone) {
   const intervalSeconds = Math.round(syncPollMs / 1000);
   const localNote = isLocalShareHost(new URL(window.location.href)) ? " Shared links use the public site." : "";
   return syncedAt
-    ? `Auto-checking every ${intervalSeconds} sec. Last sync ${syncedAt}.${localNote}`
-    : `Auto-checking every ${intervalSeconds} sec once connected.${localNote}`;
+    ? `Auto-checking every ${intervalSeconds} sec and when reopened. Last sync ${syncedAt}.${localNote}`
+    : `Auto-checking every ${intervalSeconds} sec and when reopened once connected.${localNote}`;
 }
 
 function updateSyncControls(message, tone = "idle") {
@@ -675,18 +677,42 @@ async function fetchCrewPlan() {
 
 async function pullCrewSync({ quiet = false } = {}) {
   if (!syncState.id) return;
-  if (!quiet) updateSyncControls("Pulling latest...", "busy");
-  const remote = await fetchCrewPlan();
-  const remoteUpdatedAt = Number(remote.updatedAt) || 0;
-  if (remoteUpdatedAt > syncState.lastRemoteUpdatedAt) {
-    applyCrewPlanSnapshot(remote);
-    syncState.lastRemoteUpdatedAt = remoteUpdatedAt;
-    writeLocalValue("crewSyncLastUpdatedAt", String(syncState.lastRemoteUpdatedAt));
-    updateSyncControls("Crew sync updated", "ok");
-    showToast("Crew plan updated.");
-  } else if (!quiet) {
-    updateSyncControls("Already up to date", "ok");
+  if (syncState.pullInFlight) {
+    if (!quiet) updateSyncControls("Sync check already running", "busy");
+    return;
   }
+  syncState.pullInFlight = true;
+  syncState.lastPullAttemptAt = Date.now();
+  if (!quiet) updateSyncControls("Pulling latest...", "busy");
+  try {
+    const remote = await fetchCrewPlan();
+    const remoteUpdatedAt = Number(remote.updatedAt) || 0;
+    if (remoteUpdatedAt > syncState.lastRemoteUpdatedAt) {
+      applyCrewPlanSnapshot(remote);
+      syncState.lastRemoteUpdatedAt = remoteUpdatedAt;
+      writeLocalValue("crewSyncLastUpdatedAt", String(syncState.lastRemoteUpdatedAt));
+      updateSyncControls("Crew sync updated", "ok");
+      showToast("Crew plan updated.");
+    } else if (!quiet) {
+      updateSyncControls("Already up to date", "ok");
+    }
+  } finally {
+    syncState.pullInFlight = false;
+  }
+}
+
+function requestCrewSyncPull({ quiet = true, minInterval = 0 } = {}) {
+  if (!syncState.id || !syncState.ready || syncState.applyingRemote) return;
+  if (minInterval && Date.now() - syncState.lastPullAttemptAt < minInterval) return;
+  pullCrewSync({ quiet }).catch((error) => {
+    updateSyncControls("Sync check failed", "error");
+    console.error(error);
+  });
+}
+
+function pullCrewSyncOnResume() {
+  if (document.visibilityState === "hidden") return;
+  requestCrewSyncPull({ quiet: true, minInterval: 2000 });
 }
 
 async function pushCrewSyncNow() {
@@ -727,10 +753,7 @@ function startSyncPolling() {
     console.error(error);
   });
   syncState.pollTimer = window.setInterval(() => {
-    pullCrewSync({ quiet: true }).catch((error) => {
-      updateSyncControls("Sync check failed", "error");
-      console.error(error);
-    });
+    requestCrewSyncPull({ quiet: true, minInterval: 1000 });
   }, syncPollMs);
 }
 
@@ -2119,6 +2142,10 @@ function initEvents() {
       renderSelectedRoute();
     });
   });
+
+  window.addEventListener("focus", pullCrewSyncOnResume);
+  window.addEventListener("online", pullCrewSyncOnResume);
+  document.addEventListener("visibilitychange", pullCrewSyncOnResume);
 }
 
 function boot() {

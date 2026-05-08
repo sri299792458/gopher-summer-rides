@@ -132,3 +132,9 @@ Route geometry is approximate waypoint geometry for planning and visualization, 
 
 - Added a local Node smoke check for the fragile public-site basics: versioned local assets, required mobile DOM hooks, public share-link fallback, dataset integrity, official/discovery URLs, and the May 8 / Tue-Thu-Sat / Grand Rounds schedule assumptions.
 - Kept this as tooling/docs only so it does not disturb the currently working mobile UI while still reducing the chance of another silent startup regression.
+
+## Sync resume behavior
+
+- Added a narrow Crew Sync reliability pass: when the app regains focus, becomes visible, or comes back online, it quietly checks the shared plan instead of waiting only for the next interval.
+- Added an in-flight guard and short throttle so focus/visibility events do not stack overlapping sync pulls.
+- Bumped the static asset version so mobile Chrome fetches this sync fix from GitHub Pages.
