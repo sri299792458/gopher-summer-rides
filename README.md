@@ -26,6 +26,7 @@ Primary sources include Minneapolis Park and Recreation Board, Three Rivers Park
 - WhatsApp ride-plan handoff for Sri, Apurv, and Ayaan.
 - Crew-added custom routes shared through Crew Sync.
 - Exact custom route/map links become the shared map button for the crew.
+- Route ideas can auto-estimate ride time when only distance is entered.
 - Custom rider names, optional Strava club and Photos links, and per-ride meet setup.
 - Per-ride RSVP chips for quick local planning.
 - Default 6:30 AM meet time with per-ride meet-time, meet-spot, and note overrides in the route panel.

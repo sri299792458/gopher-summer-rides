@@ -12,7 +12,7 @@
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       crossorigin=""
     />
-    <link rel="stylesheet" href="styles.css?v=20260508-route-clarity" />
+    <link rel="stylesheet" href="styles.css?v=20260508-route-idea-flow" />
   </head>
   <body>
     <div class="app-shell">
@@ -124,7 +124,7 @@
             <details class="custom-route-panel">
               <summary>
                 <i data-lucide="plus"></i>
-                Add custom route
+                Add route idea
               </summary>
               <form class="custom-route-form" id="customRouteForm">
                 <label class="crew-member">
@@ -133,12 +133,12 @@
                 </label>
                 <div class="custom-route-fields">
                   <label class="crew-member">
-                    <span>Miles</span>
+                    <span>Miles approx</span>
                     <input id="customRouteMiles" type="text" inputmode="decimal" pattern="[0-9]*[.]?[0-9]*" placeholder="12" required />
                   </label>
                   <label class="crew-member">
-                    <span>Minutes</span>
-                    <input id="customRouteMinutes" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="75" required />
+                    <span>Minutes optional</span>
+                    <input id="customRouteMinutes" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Auto" />
                   </label>
                   <label class="crew-member">
                     <span>Energy</span>
@@ -180,7 +180,7 @@
                 </label>
                 <button class="text-button" type="submit">
                   <i data-lucide="save"></i>
-                  Save route
+                  Save idea
                 </button>
               </form>
             </details>
@@ -274,7 +274,7 @@
       crossorigin=""
     ></script>
     <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.js"></script>
-    <script src="data/dataset.js?v=20260508-route-clarity"></script>
-    <script src="app.js?v=20260508-route-clarity"></script>
+    <script src="data/dataset.js?v=20260508-route-idea-flow"></script>
+    <script src="app.js?v=20260508-route-idea-flow"></script>
   </body>
 </html>

@@ -118,3 +118,4 @@ Route geometry is approximate waypoint geometry for planning and visualization, 
 - User rejected the broad mobile ride cockpit pass because the fixed nav made tab changes happen offscreen and blocked lower content; reverted it in commit d6abfef.
 - Follow-up pass is deliberately narrow: keep the working layout, promote exact custom route links into the existing map action, include exact route links in WhatsApp text, and avoid broad navigation changes.
 - Continued with another narrow pass: route library cards now show a selected badge, and small RSVP/filter/done controls have larger tap targets without changing page structure.
+- Continued route idea flow: minutes are optional and auto-estimated from miles/energy, the form uses "route idea" language, and route cards show when a custom idea has a map link.

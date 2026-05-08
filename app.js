@@ -254,11 +254,22 @@ function validateScheduledRouteIds(knownRouteIds, slots) {
   if (!slots.every((slot) => slot.routeId)) throw new Error("Schedule plan has unassigned ride slots.");
 }
 
+function estimateRouteMinutes(miles, energy) {
+  const minutesPerMile = {
+    easy: 7,
+    steady: 6.5,
+    big: 6,
+  }[energy] || 7;
+  return Math.max(20, Math.round((miles * minutesPerMile) / 5) * 5);
+}
+
 function normalizeCustomRoute(route) {
   route = route && typeof route === "object" ? route : {};
   const name = String(route.name || "Custom route").trim();
   const miles = Number(route.miles);
   const minutes = Number(route.minutes);
+  const energy = ["easy", "steady", "big"].includes(route.energy) ? route.energy : "easy";
+  const plannedMiles = Number.isFinite(miles) && miles > 0 ? Math.round(miles * 10) / 10 : 8;
   const stops = Array.isArray(route.stops)
     ? route.stops.map((stop) => String(stop).trim()).filter(Boolean)
     : String(route.stops || "")
@@ -271,9 +282,9 @@ function normalizeCustomRoute(route) {
   return {
     id,
     name,
-    miles: Number.isFinite(miles) && miles > 0 ? Math.round(miles * 10) / 10 : 8,
-    minutes: Number.isFinite(minutes) && minutes > 0 ? Math.round(minutes) : 60,
-    energy: ["easy", "steady", "big"].includes(route.energy) ? route.energy : "easy",
+    miles: plannedMiles,
+    minutes: Number.isFinite(minutes) && minutes > 0 ? Math.round(minutes) : estimateRouteMinutes(plannedMiles, energy),
+    energy,
     vibe: ["water", "city", "green", "destination"].includes(route.vibe) ? route.vibe : "city",
     surface: String(route.surface || "Custom route").trim(),
     start: String(route.start || defaultPreferences.meetSpot).trim(),
@@ -1268,6 +1279,7 @@ function renderRoutes() {
             <span>${route.minutes} min</span>
             <span class="badge">${escapeHtml(route.vibe)}</span>
             ${route.custom ? '<span class="badge badge-custom">custom</span>' : ""}
+            ${route.link ? '<span class="badge badge-map">map link</span>' : ""}
             ${route.id === state.selectedRouteId ? '<span class="badge badge-selected">selected</span>' : ""}
           </p>
           <p class="route-note">${escapeHtml(route.note)}</p>

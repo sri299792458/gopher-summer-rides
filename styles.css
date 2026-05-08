@@ -595,11 +595,18 @@ h3 {
 }
 
 .badge-custom,
+.badge-map,
 .badge-selected,
 .custom-route-tag {
   border-color: rgba(39, 122, 99, 0.28);
   background: #eff6f3;
   color: var(--green);
+}
+
+.badge-map {
+  border: 1px solid rgba(47, 128, 160, 0.26);
+  background: #eef7fb;
+  color: var(--river);
 }
 
 .badge-selected {
