@@ -105,3 +105,10 @@ Route geometry is approximate waypoint geometry for planning and visualization, 
 - Reverted the mistaken public-link assumption from the prior fix attempt.
 - Hardened startup after the sync work: localStorage failures no longer crash boot, newer optional/nullish syntax was removed, ride content renders before map/sync startup, and map/sync failures are isolated from first paint.
 - Added versioned asset URLs for the app CSS/data/JS so mobile Chrome fetches the fixed bundle instead of a stale cached script.
+
+## Custom routes and Strava links
+
+- User chose the practical path: custom routes first, then manual Strava activity links before any full Strava OAuth/backend integration.
+- Added custom routes as Crew Sync state so Sri, Apurv, and Ayaan can add route ideas together without changing the fixed summer schedule.
+- Added a post-ride panel on each selected route to mark it done and paste a Strava activity URL.
+- Browser QA found and fixed route-link preservation, mobile numeric-field friction, and escaping for crew-entered custom route text.

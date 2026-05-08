@@ -12,7 +12,7 @@
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       crossorigin=""
     />
-    <link rel="stylesheet" href="styles.css?v=20260508-mobile-startup" />
+    <link rel="stylesheet" href="styles.css?v=20260508-custom-routes-2" />
   </head>
   <body>
     <div class="app-shell">
@@ -121,6 +121,69 @@
               <button class="filter-chip" type="button" data-vibe="green" aria-pressed="false">Green</button>
               <button class="filter-chip" type="button" data-vibe="destination" aria-pressed="false">Destination</button>
             </div>
+            <details class="custom-route-panel">
+              <summary>
+                <i data-lucide="plus"></i>
+                Add custom route
+              </summary>
+              <form class="custom-route-form" id="customRouteForm">
+                <label class="crew-member">
+                  <span>Name</span>
+                  <input id="customRouteName" type="text" placeholder="Sunrise taco loop" required />
+                </label>
+                <div class="custom-route-fields">
+                  <label class="crew-member">
+                    <span>Miles</span>
+                    <input id="customRouteMiles" type="text" inputmode="decimal" pattern="[0-9]*[.]?[0-9]*" placeholder="12" required />
+                  </label>
+                  <label class="crew-member">
+                    <span>Minutes</span>
+                    <input id="customRouteMinutes" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="75" required />
+                  </label>
+                  <label class="crew-member">
+                    <span>Energy</span>
+                    <select id="customRouteEnergy">
+                      <option value="easy">Easy</option>
+                      <option value="steady">Steady</option>
+                      <option value="big">Big day</option>
+                    </select>
+                  </label>
+                  <label class="crew-member">
+                    <span>Vibe</span>
+                    <select id="customRouteVibe">
+                      <option value="city">City</option>
+                      <option value="water">Water</option>
+                      <option value="green">Green</option>
+                      <option value="destination">Destination</option>
+                    </select>
+                  </label>
+                </div>
+                <label class="crew-member">
+                  <span>Start area</span>
+                  <input id="customRouteStart" type="text" value="UMN East Bank" />
+                </label>
+                <label class="crew-member">
+                  <span>Surface / route type</span>
+                  <input id="customRouteSurface" type="text" value="Paved trail" />
+                </label>
+                <label class="crew-member">
+                  <span>Stops or landmarks</span>
+                  <input id="customRouteStops" type="text" placeholder="Coffee, overlook, breakfast" />
+                </label>
+                <label class="crew-member">
+                  <span>Notes</span>
+                  <textarea id="customRouteNote" rows="2" placeholder="Why this ride is worth doing"></textarea>
+                </label>
+                <label class="crew-member">
+                  <span>Route/map link</span>
+                  <input id="customRouteLink" type="text" inputmode="url" placeholder="Google Maps, Strava route, blog, GPX..." />
+                </label>
+                <button class="text-button" type="submit">
+                  <i data-lucide="save"></i>
+                  Save route
+                </button>
+              </form>
+            </details>
             <div class="route-list" id="routeList" aria-live="polite"></div>
           </section>
 
@@ -211,7 +274,7 @@
       crossorigin=""
     ></script>
     <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.js"></script>
-    <script src="data/dataset.js?v=20260508-mobile-startup"></script>
-    <script src="app.js?v=20260508-mobile-startup"></script>
+    <script src="data/dataset.js?v=20260508-custom-routes-2"></script>
+    <script src="app.js?v=20260508-custom-routes-2"></script>
   </body>
 </html>

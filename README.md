@@ -24,12 +24,14 @@ Primary sources include Minneapolis Park and Recreation Board, Three Rivers Park
 - Vibe and energy filters.
 - Per-browser completion tracking.
 - WhatsApp ride-plan handoff for Sri, Apurv, and Ayaan.
+- Crew-added custom routes shared through Crew Sync.
 - Custom rider names, optional Strava club and Photos links, and per-ride meet setup.
 - Per-ride RSVP chips for quick local planning.
 - Default 6:30 AM meet time with per-ride meet-time, meet-spot, and note overrides in the route panel.
+- Manual Strava activity links for post-ride logging.
 - Refreshable upcoming route picks, while completed rides and the Grand Rounds finale stay locked.
 - Strava app handoff for starting a recording, plus an optional separate club link.
-- Shared crew sync link for names, settings, RSVPs, completed rides, route queue, and ride overrides.
+- Shared crew sync link for names, settings, RSVPs, completed rides, route queue, ride overrides, custom routes, and saved activity links.
 - Optional private Photos album link saved in crew settings instead of hard-coded into the public site.
 - `.ics` calendar export for the full summer plan.
 - Route-specific learn-more links for local history, ride previews, blogs, articles, and videos.

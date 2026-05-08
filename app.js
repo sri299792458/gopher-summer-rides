@@ -1,7 +1,10 @@
 (() => {
 const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const { routes, schedulePlan, sources } = window.RIDE_DATA;
-const routeById = new Map(routes.map((route) => [route.id, route]));
+const rideData = window.RIDE_DATA;
+const baseRoutes = rideData.routes;
+const { schedulePlan, sources } = rideData;
+let routes = baseRoutes.slice();
+const routeById = new Map();
 const initialSearchParams = new URLSearchParams(window.location.search);
 const syncApiBase = "https://mantledb.sh/v2";
 const syncPath = "crew-plan";
@@ -43,6 +46,21 @@ function randomId(prefix = "") {
       ? window.crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   return prefix ? `${prefix}-${id}` : id;
+}
+
+function slugify(value) {
+  const slug = String(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return slug || "route";
+}
+
+function normalizeExternalUrl(value) {
+  const trimmed = String(value || "").trim();
+  if (!trimmed) return "";
+  if (/^www\./i.test(trimmed)) return `https://${trimmed}`;
+  return /^https?:\/\//i.test(trimmed) ? trimmed : "";
 }
 
 function safeJsonStorage(key, fallback) {
@@ -98,6 +116,8 @@ const state = {
   planAssignments: safeObjectStorage("planAssignments", {}),
   planSeed: safeNumberStorage("planSeed", 0),
   rideOverrides: safeObjectStorage("rideOverrides", {}),
+  customRoutes: safeArrayStorage("customRoutes", []),
+  activityLinks: safeObjectStorage("rideActivityLinks", {}),
 };
 
 const syncState = {
@@ -135,6 +155,19 @@ const riderInputs = [document.querySelector("#riderOne"), document.querySelector
 const preferenceInputs = {
   stravaClub: document.querySelector("#stravaClub"),
   photosAlbum: document.querySelector("#photosAlbum"),
+};
+const customRouteForm = document.querySelector("#customRouteForm");
+const customRouteInputs = {
+  name: document.querySelector("#customRouteName"),
+  miles: document.querySelector("#customRouteMiles"),
+  minutes: document.querySelector("#customRouteMinutes"),
+  energy: document.querySelector("#customRouteEnergy"),
+  vibe: document.querySelector("#customRouteVibe"),
+  start: document.querySelector("#customRouteStart"),
+  surface: document.querySelector("#customRouteSurface"),
+  stops: document.querySelector("#customRouteStops"),
+  note: document.querySelector("#customRouteNote"),
+  link: document.querySelector("#customRouteLink"),
 };
 const syncStatus = document.querySelector("#syncStatus");
 const startSyncButton = document.querySelector("#startSyncButton");
@@ -219,6 +252,56 @@ function validateScheduledRouteIds(knownRouteIds, slots) {
   }
 
   if (!slots.every((slot) => slot.routeId)) throw new Error("Schedule plan has unassigned ride slots.");
+}
+
+function normalizeCustomRoute(route) {
+  route = route && typeof route === "object" ? route : {};
+  const name = String(route.name || "Custom route").trim();
+  const miles = Number(route.miles);
+  const minutes = Number(route.minutes);
+  const stops = Array.isArray(route.stops)
+    ? route.stops.map((stop) => String(stop).trim()).filter(Boolean)
+    : String(route.stops || "")
+        .split(",")
+        .map((stop) => stop.trim())
+        .filter(Boolean);
+  const link = normalizeExternalUrl(route.link);
+  const id = route.id && String(route.id).startsWith("custom-") ? route.id : randomId(`custom-${slugify(name)}`);
+
+  return {
+    id,
+    name,
+    miles: Number.isFinite(miles) && miles > 0 ? Math.round(miles * 10) / 10 : 8,
+    minutes: Number.isFinite(minutes) && minutes > 0 ? Math.round(minutes) : 60,
+    energy: ["easy", "steady", "big"].includes(route.energy) ? route.energy : "easy",
+    vibe: ["water", "city", "green", "destination"].includes(route.vibe) ? route.vibe : "city",
+    surface: String(route.surface || "Custom route").trim(),
+    start: String(route.start || defaultPreferences.meetSpot).trim(),
+    note: String(route.note || "Crew-added route. Confirm the exact path before rolling.").trim(),
+    stops: stops.length ? stops : ["Custom stop"],
+    link,
+    color: route.color || "#7a1f2b",
+    coords: Array.isArray(route.coords) && route.coords.length >= 2 ? route.coords : [[44.9757, -93.2342], [44.9847, -93.2548]],
+    sourceKeys: ["openStreetMap"],
+    learnMore: link ? [{ title: "Custom route link", url: link, kind: "article" }] : [],
+    caveat: "Crew-added route. Verify roads, trail closures, and exact navigation before riding.",
+    distanceMethod: "Crew-entered planned ride distance",
+    geometrySource: "Crew-entered route placeholder",
+    geometryPrecision: "Planning only, not turn-by-turn navigation",
+    lastVerified: "crew-added",
+    custom: true,
+  };
+}
+
+function rebuildRouteLibrary() {
+  const customRoutes = state.customRoutes
+    .filter((route) => route && typeof route === "object")
+    .map(normalizeCustomRoute);
+  state.customRoutes = customRoutes;
+  routes = baseRoutes.concat(customRoutes);
+  routeById.clear();
+  routes.forEach((route) => routeById.set(route.id, route));
+  if (!routeById.has(state.selectedRouteId)) state.selectedRouteId = "stone-arch-boom";
 }
 
 function groupScheduleSlots(slots, weekSize) {
@@ -323,7 +406,7 @@ function pickAdaptiveRoute(pool, slot, slotIndex, totalSlots, previousRoute, see
 }
 
 function normalizePlanAssignments({ preserve = true } = {}) {
-  const knownRouteIds = new Set(routes.map((route) => route.id));
+  const knownRouteIds = new Set(baseRoutes.map((route) => route.id));
   const fixedRouteIds = new Set(scheduleSlots.filter((slot) => slot.fixedRouteId).map((slot) => slot.fixedRouteId));
   const nextAssignments = {};
   const usedRouteIds = new Set(fixedRouteIds);
@@ -342,7 +425,7 @@ function normalizePlanAssignments({ preserve = true } = {}) {
     }
   }
 
-  let pool = routes
+  let pool = baseRoutes
     .map((route) => route.id)
     .filter((routeId) => !usedRouteIds.has(routeId));
 
@@ -366,12 +449,12 @@ function buildScheduleFromAssignments() {
     ...slot,
     routeId: slot.fixedRouteId || state.planAssignments[slot.id],
   }));
-  validateScheduledRouteIds(new Set(routes.map((route) => route.id)), slots);
+  validateScheduledRouteIds(new Set(baseRoutes.map((route) => route.id)), slots);
   return groupScheduleSlots(slots, schedulePlan.weekSize || 3);
 }
 
 function refreshSchedule({ preserve = true } = {}) {
-  scheduleSlots = buildScheduleSlots(schedulePlan, routes);
+  scheduleSlots = buildScheduleSlots(schedulePlan, baseRoutes);
   normalizePlanAssignments({ preserve });
   schedule = buildScheduleFromAssignments();
   lastScheduledWeek = schedule[schedule.length - 1];
@@ -411,6 +494,7 @@ function rideKey(slot) {
 }
 
 function routeIdFromRideKey(key) {
+  if (String(key).startsWith("route:")) return String(key).slice(6);
   const dateKeyMatch = String(key).match(/^\d{4}-\d{2}-\d{2}-(.+)$/);
   return dateKeyMatch ? dateKeyMatch[1] : "";
 }
@@ -464,6 +548,8 @@ function getCrewPlanSnapshot() {
     planAssignments: { ...state.planAssignments },
     planSeed: state.planSeed,
     rideOverrides: { ...state.rideOverrides },
+    customRoutes: state.customRoutes.slice(),
+    activityLinks: { ...state.activityLinks },
   };
 }
 
@@ -475,6 +561,8 @@ function persistLocalCrewState() {
   writeLocalValue("planAssignments", JSON.stringify(state.planAssignments));
   writeLocalValue("planSeed", String(state.planSeed));
   writeLocalValue("rideOverrides", JSON.stringify(state.rideOverrides));
+  writeLocalValue("customRoutes", JSON.stringify(state.customRoutes));
+  writeLocalValue("rideActivityLinks", JSON.stringify(state.activityLinks));
 }
 
 function renderCrewControls() {
@@ -497,7 +585,12 @@ function applyCrewPlanSnapshot(snapshot) {
     state.planAssignments = snapshot.planAssignments && typeof snapshot.planAssignments === "object" ? snapshot.planAssignments : {};
     state.planSeed = Number.isFinite(Number(snapshot.planSeed)) ? Number(snapshot.planSeed) : 0;
     state.rideOverrides = snapshot.rideOverrides && typeof snapshot.rideOverrides === "object" ? snapshot.rideOverrides : {};
+    state.customRoutes = Array.isArray(snapshot.customRoutes) ? snapshot.customRoutes.map(normalizeCustomRoute) : [];
+    state.activityLinks = snapshot.activityLinks && typeof snapshot.activityLinks === "object" ? snapshot.activityLinks : {};
     persistLocalCrewState();
+    rebuildRouteLibrary();
+    const requestedRoute = initialSearchParams.get("route");
+    if (requestedRoute && routeById.has(requestedRoute)) state.selectedRouteId = requestedRoute;
     refreshSchedule({ preserve: true });
     renderCrewControls();
     renderAll();
@@ -606,8 +699,28 @@ function getCompletedRouteIds() {
   return new Set([...state.completed].map(routeIdFromRideKey).filter((routeId) => routeById.has(routeId)));
 }
 
+function completionKeyForRoute(route, scheduled) {
+  return scheduled ? rideKey(scheduled.slot) : `route:${route.id}`;
+}
+
+function isRouteComplete(route, scheduled) {
+  const key = completionKeyForRoute(route, scheduled);
+  return state.completed.has(key) || getCompletedRouteIds().has(route.id);
+}
+
 function isRideDone(slot) {
   return state.completed.has(rideKey(slot)) || getCompletedRouteIds().has(slot.routeId);
+}
+
+function toggleRouteCompletion(routeId, key) {
+  const existingKeys = [...state.completed].filter((completedKey) => routeIdFromRideKey(completedKey) === routeId);
+  if (state.completed.has(key) || existingKeys.length) {
+    existingKeys.forEach((completedKey) => state.completed.delete(completedKey));
+    state.completed.delete(key);
+  } else {
+    state.completed.add(key);
+  }
+  saveCompleted();
 }
 
 function refreshUpcomingPlan() {
@@ -655,6 +768,69 @@ function savePlanState() {
 function saveRideOverrides() {
   writeLocalValue("rideOverrides", JSON.stringify(state.rideOverrides));
   queueSyncPush();
+}
+
+function saveCustomRoutes() {
+  writeLocalValue("customRoutes", JSON.stringify(state.customRoutes));
+  queueSyncPush();
+}
+
+function saveActivityLinks() {
+  writeLocalValue("rideActivityLinks", JSON.stringify(state.activityLinks));
+  queueSyncPush();
+}
+
+function addCustomRouteFromForm() {
+  if (!customRouteForm || !customRouteInputs.name) return;
+  const route = normalizeCustomRoute({
+    id: randomId(`custom-${slugify(customRouteInputs.name.value)}`),
+    name: customRouteInputs.name.value,
+    miles: customRouteInputs.miles.value,
+    minutes: customRouteInputs.minutes.value,
+    energy: customRouteInputs.energy.value,
+    vibe: customRouteInputs.vibe.value,
+    start: customRouteInputs.start.value,
+    surface: customRouteInputs.surface.value,
+    stops: customRouteInputs.stops.value,
+    note: customRouteInputs.note.value,
+    link: customRouteInputs.link.value,
+  });
+
+  state.customRoutes.push(route);
+  rebuildRouteLibrary();
+  state.selectedRouteId = route.id;
+  state.activeTab = "routes";
+  saveCustomRoutes();
+  renderAll();
+  setActiveTab("routes");
+  customRouteForm.reset();
+  if (customRouteInputs.start) customRouteInputs.start.value = state.preferences.meetSpot;
+  if (customRouteInputs.surface) customRouteInputs.surface.value = "Paved trail";
+  showToast("Custom route added.");
+  focusSelectedRoutePanel();
+}
+
+function deleteCustomRoute(routeId) {
+  const route = routeById.get(routeId);
+  if (!route || !route.custom) return;
+  const message = syncState.id
+    ? "Remove this custom route for everyone using the crew sync link?"
+    : "Remove this custom route?";
+  if (!window.confirm(message)) return;
+  state.customRoutes = state.customRoutes.filter((customRoute) => customRoute.id !== routeId);
+  Object.keys(state.activityLinks).forEach((key) => {
+    if (routeIdFromRideKey(key) === routeId) delete state.activityLinks[key];
+  });
+  [...state.completed].forEach((key) => {
+    if (routeIdFromRideKey(key) === routeId) state.completed.delete(key);
+  });
+  rebuildRouteLibrary();
+  if (state.selectedRouteId === routeId) state.selectedRouteId = "stone-arch-boom";
+  saveCustomRoutes();
+  saveActivityLinks();
+  saveCompleted();
+  renderAll();
+  showToast("Custom route removed.");
 }
 
 function getInitialParams() {
@@ -776,6 +952,16 @@ function updateRideOverride(slotId, field, rawValue) {
   if (spotDisplay) spotDisplay.textContent = getRideMeetSpot(slot);
 }
 
+function updateActivityLink(key, rawValue) {
+  const value = normalizeExternalUrl(rawValue);
+  if (value) {
+    state.activityLinks[key] = { url: value, updatedAt: Date.now() };
+  } else {
+    delete state.activityLinks[key];
+  }
+  saveActivityLinks();
+}
+
 function getRideStartTimeForIcs(slot) {
   return `${getRideMeetTime(slot).replace(":", "")}00`;
 }
@@ -842,11 +1028,11 @@ function getWhatsAppUrl(route) {
 }
 
 function getStravaClubUrl() {
-  return state.preferences.stravaClub.startsWith("http") ? state.preferences.stravaClub : "";
+  return normalizeExternalUrl(state.preferences.stravaClub);
 }
 
 function getPhotosAlbumUrl() {
-  return state.preferences.photosAlbum && state.preferences.photosAlbum.startsWith("http") ? state.preferences.photosAlbum : "";
+  return normalizeExternalUrl(state.preferences.photosAlbum);
 }
 
 function getStravaLaunchUrl() {
@@ -909,8 +1095,9 @@ function learnMoreKindLabel(kind) {
 
 function renderLearnMoreLink(link) {
   const title = escapeHtml(link.title || link.label || "Learn more");
-  const url = escapeHtml(link.url);
+  const url = escapeHtml(normalizeExternalUrl(link.url));
   const kind = escapeHtml(learnMoreKindLabel(link.kind));
+  if (!url) return "";
   return `
     <a href="${url}" target="_blank" rel="noopener noreferrer">
       <span>${kind}</span>
@@ -991,29 +1178,31 @@ function renderWeek() {
     .map(({ slot, route }) => {
       const key = rideKey(slot);
       const done = isRideDone(slot);
+      const routeName = escapeHtml(route.name);
       return `
         <article class="ride-card">
           <div class="day-pill">${slot.label}</div>
           <div class="ride-main">
-            <button type="button" class="route-select-link" data-route="${route.id}">
-              <h3>${route.name}</h3>
+            <button type="button" class="route-select-link" data-route="${escapeHtml(route.id)}">
+              <h3>${routeName}</h3>
               <p class="meta-line">
                 <span>${route.miles} approx mi</span>
-                <span>${route.surface}</span>
+                <span>${escapeHtml(route.surface)}</span>
                 <span class="badge">${route.energy}</span>
               </p>
             </button>
-            <div class="rsvp-row" aria-label="${route.name} RSVPs">
+            <div class="rsvp-row" aria-label="${routeName} RSVPs">
               ${state.riders
                 .map((name, index) => {
                   const status = getRsvp(key, index);
                   const label = rsvpLabels[status];
-                  return `<button class="rsvp-chip ${status ? `is-${status}` : ""}" type="button" data-rsvp-key="${key}" data-rider-index="${index}" aria-label="${name || defaultRiders[index]} RSVP ${label}">${name || defaultRiders[index]}: ${label}</button>`;
+                  const riderName = escapeHtml(name || defaultRiders[index]);
+                  return `<button class="rsvp-chip ${status ? `is-${status}` : ""}" type="button" data-rsvp-key="${escapeHtml(key)}" data-rider-index="${index}" aria-label="${riderName} RSVP ${label}">${riderName}: ${label}</button>`;
                 })
                 .join("")}
             </div>
           </div>
-          <button class="ride-action ${done ? "is-done" : ""}" type="button" data-done-key="${key}" data-done-route="${route.id}" title="Toggle done" aria-label="Mark ${route.name} ${done ? "incomplete" : "complete"}" aria-pressed="${done}">
+          <button class="ride-action ${done ? "is-done" : ""}" type="button" data-done-key="${escapeHtml(key)}" data-done-route="${escapeHtml(route.id)}" title="Toggle done" aria-label="Mark ${routeName} ${done ? "incomplete" : "complete"}" aria-pressed="${done}">
             <i data-lucide="${done ? "check" : "circle"}"></i>
           </button>
         </article>
@@ -1033,9 +1222,9 @@ function renderSchedule() {
           const route = routeById.get(slot.routeId);
           const key = rideKey(slot);
           return `
-            <button type="button" class="week-row" data-route="${route.id}">
+            <button type="button" class="week-row" data-route="${escapeHtml(route.id)}">
               <span>${slot.label}</span>
-              <strong>${route.name}${slot.isFinale ? ' <span class="finale-pill">Finale</span>' : ""}</strong>
+              <strong>${escapeHtml(route.name)}${slot.isFinale ? ' <span class="finale-pill">Finale</span>' : ""}</strong>
               <span>${isRideDone(slot) ? "Done" : `${formatRideDate(slot)} - ${route.miles} mi`}</span>
             </button>
           `;
@@ -1057,14 +1246,15 @@ function renderRoutes() {
   routeList.innerHTML = visibleRoutes
     .map((route) => `
       <article class="route-card ${route.id === state.selectedRouteId ? "is-selected" : ""}">
-        <button type="button" data-route="${route.id}">
-          <h3>${route.name}</h3>
+        <button type="button" data-route="${escapeHtml(route.id)}">
+          <h3>${escapeHtml(route.name)}</h3>
           <p class="meta-line">
             <span>${route.miles} approx mi</span>
             <span>${route.minutes} min</span>
-            <span class="badge">${route.vibe}</span>
+            <span class="badge">${escapeHtml(route.vibe)}</span>
+            ${route.custom ? '<span class="badge badge-custom">custom</span>' : ""}
           </p>
-          <p class="route-note">${route.note}</p>
+          <p class="route-note">${escapeHtml(route.note)}</p>
         </button>
       </article>
     `)
@@ -1079,8 +1269,9 @@ function renderStats() {
   const totalMiles = completedDetails.reduce((sum, route) => sum + route.miles, 0);
   const longest = completedDetails.reduce((max, route) => Math.max(max, route.miles), 0);
   const completedCount = completedDetails.length;
-  const percent = Math.round((completedCount / totalScheduledRides) * 100);
-  doneCount.textContent = `${completedCount}/${totalScheduledRides} done`;
+  const progressTotal = Math.max(totalScheduledRides, completedCount);
+  const percent = Math.round((completedCount / progressTotal) * 100);
+  doneCount.textContent = `${completedCount}/${progressTotal} done`;
   milesDone.textContent = totalMiles;
   ridesDone.textContent = completedCount;
   longestRide.textContent = longest;
@@ -1110,15 +1301,19 @@ function renderAchievements(completedDetails, totalMiles, longest) {
 function renderSelectedRoute() {
   const route = routeById.get(state.selectedRouteId);
   const scheduled = getSelectedScheduleSlot(route.id);
-  const scheduledText = scheduled ? `${scheduled.slot.label}, ${formatRideDate(scheduled.slot)}` : "Backup ride";
+  const scheduledText = scheduled ? `${scheduled.slot.label}, ${formatRideDate(scheduled.slot)}` : route.custom ? "Shared route library" : "Backup ride";
+  const completionKey = completionKeyForRoute(route, scheduled);
+  const routeComplete = isRouteComplete(route, scheduled);
+  const activityLink = state.activityLinks[completionKey] && state.activityLinks[completionKey].url ? normalizeExternalUrl(state.activityLinks[completionKey].url) : "";
   const rideOverride = scheduled ? state.rideOverrides[scheduled.slot.id] || {} : {};
   const meetTime = scheduled ? getRideMeetTime(scheduled.slot) : state.preferences.weeknightTime;
   const meetSpot = scheduled ? getRideMeetSpot(scheduled.slot) : state.preferences.meetSpot;
   const routeSources = (route.sourceKeys || [])
     .map((key) => sources[key])
     .filter(Boolean);
-  const learnMoreLinks = (route.learnMore || []).filter((link) => link && link.url);
-  const caveat = route.caveat ? `<p class="route-caveat">${route.caveat}</p>` : "";
+  const learnMoreLinks = (route.learnMore || []).filter((link) => link && normalizeExternalUrl(link.url));
+  const caveat = route.caveat ? `<p class="route-caveat">${escapeHtml(route.caveat)}</p>` : "";
+  const mapNote = route.custom ? '<p class="route-caveat">Custom route map is approximate unless the route link has exact navigation.</p>' : "";
   selectedTitle.textContent = route.name;
   selectedVibe.textContent = route.vibe;
   selectedMiles.textContent = route.miles;
@@ -1126,15 +1321,16 @@ function renderSelectedRoute() {
   selectedEnergy.textContent = route.energy;
   detailDock.innerHTML = `
     <div>
-      <p class="eyebrow">${route.start}</p>
-      <h2>${route.surface}</h2>
-      <p>${route.note}</p>
+      <p class="eyebrow">${escapeHtml(route.start)}</p>
+      <h2>${escapeHtml(route.surface)}${route.custom ? ' <span class="custom-route-tag">Custom</span>' : ""}</h2>
+      <p>${escapeHtml(route.note)}</p>
       ${caveat}
-      <p class="data-note">${route.distanceMethod}. ${route.geometryPrecision}. Last verified ${route.lastVerified}.</p>
+      ${mapNote}
+      <p class="data-note">${escapeHtml(route.distanceMethod)}. ${escapeHtml(route.geometryPrecision)}. Last verified ${escapeHtml(route.lastVerified)}.</p>
     </div>
     <div>
-      <p class="eyebrow">${scheduledText}</p>
-      <div class="stop-list">${route.stops.map((stop) => `<span>${stop}</span>`).join("")}</div>
+      <p class="eyebrow">${escapeHtml(scheduledText)}</p>
+      <div class="stop-list">${route.stops.map((stop) => `<span>${escapeHtml(stop)}</span>`).join("")}</div>
       <div class="ride-ops">
         <div>
           <span>Meet</span>
@@ -1167,6 +1363,27 @@ function renderSelectedRoute() {
             </div>`
           : ""
       }
+      <div class="post-ride-panel">
+        <div class="post-ride-heading">
+          <div>
+            <p class="eyebrow">After ride</p>
+            <strong>${routeComplete ? "Ride marked done" : "Ready to log after the ride"}</strong>
+          </div>
+          <button class="text-button" type="button" data-toggle-route-complete="${escapeHtml(completionKey)}" data-route-id="${escapeHtml(route.id)}">
+            <i data-lucide="${routeComplete ? "check" : "circle"}"></i>
+            ${routeComplete ? "Done" : "Mark done"}
+          </button>
+        </div>
+        <label>
+          <span>Shared Strava activity</span>
+          <input type="url" data-activity-link="${escapeHtml(completionKey)}" value="${escapeHtml(activityLink)}" placeholder="https://www.strava.com/activities/..." />
+        </label>
+        ${
+          activityLink
+            ? `<a class="activity-open-link" href="${escapeHtml(activityLink)}" target="_blank" rel="noopener noreferrer">Open saved activity</a>`
+            : ""
+        }
+      </div>
       <div class="action-grid">
         <a class="inline-action action-whatsapp" href="${getWhatsAppUrl(route)}" target="_blank" rel="noopener noreferrer">
           <i data-lucide="message-circle"></i>
@@ -1194,6 +1411,14 @@ function renderSelectedRoute() {
                 <i data-lucide="users"></i>
                 Strava club
               </a>`
+            : ""
+        }
+        ${
+          route.custom
+            ? `<button class="inline-action action-remove" type="button" data-delete-custom-route="${escapeHtml(route.id)}">
+                <i data-lucide="trash-2"></i>
+                Remove custom
+              </button>`
             : ""
         }
       </div>
@@ -1241,7 +1466,7 @@ function drawRoute(route) {
       fillColor: route.color,
       fillOpacity: 1,
       weight: 3,
-    }).bindPopup(`<strong>${route.name}</strong><br>${route.start}`),
+    }).bindPopup(`<strong>${escapeHtml(route.name)}</strong><br>${escapeHtml(route.start)}`),
     L.circleMarker(end, {
       radius: 7,
       color: "#ffffff",
@@ -1390,6 +1615,8 @@ function initEvents() {
     const vibeButton = event.target.closest("[data-vibe]");
     const rsvpButton = event.target.closest("[data-rsvp-key]");
     const stravaButton = event.target.closest("[data-strava-launch]");
+    const completionButton = event.target.closest("[data-toggle-route-complete]");
+    const deleteCustomButton = event.target.closest("[data-delete-custom-route]");
     const disabledLink = event.target.closest("a.is-disabled");
 
     if (disabledLink) {
@@ -1405,15 +1632,19 @@ function initEvents() {
     if (doneButton) {
       const key = doneButton.dataset.doneKey;
       const routeId = doneButton.dataset.doneRoute;
-      const existingKeys = [...state.completed].filter((completedKey) => routeIdFromRideKey(completedKey) === routeId);
-      if (state.completed.has(key) || existingKeys.length) {
-        existingKeys.forEach((completedKey) => state.completed.delete(completedKey));
-        state.completed.delete(key);
-      } else {
-        state.completed.add(key);
-      }
-      saveCompleted();
+      toggleRouteCompletion(routeId, key);
       renderAll();
+      return;
+    }
+
+    if (completionButton) {
+      toggleRouteCompletion(completionButton.dataset.routeId, completionButton.dataset.toggleRouteComplete);
+      renderAll();
+      return;
+    }
+
+    if (deleteCustomButton) {
+      deleteCustomRoute(deleteCustomButton.dataset.deleteCustomRoute);
       return;
     }
 
@@ -1472,8 +1703,14 @@ function initEvents() {
   });
   document.body.addEventListener("input", (event) => {
     const overrideInput = event.target.closest("[data-ride-override]");
-    if (!overrideInput) return;
-    updateRideOverride(overrideInput.dataset.slotId, overrideInput.dataset.rideOverride, overrideInput.value);
+    const activityInput = event.target.closest("[data-activity-link]");
+    if (overrideInput) {
+      updateRideOverride(overrideInput.dataset.slotId, overrideInput.dataset.rideOverride, overrideInput.value);
+      return;
+    }
+    if (activityInput) {
+      updateActivityLink(activityInput.dataset.activityLink, activityInput.value);
+    }
   });
 
   document.querySelector("#downloadCalendarButton").addEventListener("click", downloadCalendar);
@@ -1498,6 +1735,13 @@ function initEvents() {
       console.error(error);
     });
   });
+
+  if (customRouteForm) {
+    customRouteForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      addCustomRouteFromForm();
+    });
+  }
 
   document.querySelector("#randomRideButton").addEventListener("click", () => {
     pickBackupRide();
@@ -1531,6 +1775,7 @@ function initEvents() {
 function boot() {
   const params = getInitialParams();
   if (params.sync) setSyncId(params.sync);
+  rebuildRouteLibrary();
   refreshSchedule({ preserve: true });
   dateInput.min = formatDateValue(summerStart);
   dateInput.max = formatDateValue(summerEnd);
