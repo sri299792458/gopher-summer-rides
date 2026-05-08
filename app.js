@@ -101,16 +101,12 @@ const seasonProgress = document.querySelector("#seasonProgress");
 const meterFill = document.querySelector("#meterFill");
 const riderInputs = [document.querySelector("#riderOne"), document.querySelector("#riderTwo"), document.querySelector("#riderThree")];
 const preferenceInputs = {
-  weeknightTime: document.querySelector("#weeknightTime"),
-  saturdayTime: document.querySelector("#saturdayTime"),
-  meetSpot: document.querySelector("#meetSpot"),
   stravaClub: document.querySelector("#stravaClub"),
   photosAlbum: document.querySelector("#photosAlbum"),
 };
 const syncStatus = document.querySelector("#syncStatus");
 const startSyncButton = document.querySelector("#startSyncButton");
 const copySyncLinkButton = document.querySelector("#copySyncLinkButton");
-const whatsAppSyncLink = document.querySelector("#whatsAppSyncLink");
 const pullSyncButton = document.querySelector("#pullSyncButton");
 const toast = document.querySelector("#toast");
 
@@ -383,10 +379,8 @@ function rideKey(slot) {
 }
 
 function routeIdFromRideKey(key) {
-  if (key.startsWith("route:")) return key.slice(6);
-  const dateKeyMatch = key.match(/^\d{4}-\d{2}-\d{2}-(.+)$/);
-  if (dateKeyMatch) return dateKeyMatch[1];
-  return key.split("-").slice(2).join("-");
+  const dateKeyMatch = String(key).match(/^\d{4}-\d{2}-\d{2}-(.+)$/);
+  return dateKeyMatch ? dateKeyMatch[1] : "";
 }
 
 function setSyncId(id) {
@@ -410,11 +404,6 @@ function getSyncLink() {
   return url.toString();
 }
 
-function getWhatsAppSyncUrl() {
-  const text = `Gopher Summer Rides crew plan for Sri, Apurv, and Ayaan: ${getSyncLink()}`;
-  return `https://wa.me/?text=${encodeURIComponent(text)}`;
-}
-
 function updateSyncControls(message, tone = "idle") {
   if (!syncStatus) return;
   const isConnected = Boolean(syncState.id);
@@ -426,11 +415,6 @@ function updateSyncControls(message, tone = "idle") {
   }
   if (copySyncLinkButton) copySyncLinkButton.disabled = !isConnected;
   if (pullSyncButton) pullSyncButton.disabled = !isConnected || syncState.busy;
-  if (whatsAppSyncLink) {
-    whatsAppSyncLink.href = isConnected ? getWhatsAppSyncUrl() : "#";
-    whatsAppSyncLink.classList.toggle("is-disabled", !isConnected);
-    whatsAppSyncLink.setAttribute("aria-disabled", String(!isConnected));
-  }
   renderIcons();
 }
 
@@ -1486,15 +1470,6 @@ function boot() {
   if (params.route && routeById.has(params.route)) state.selectedRouteId = params.route;
   if (params.vibe && ["all", "water", "city", "green", "destination"].includes(params.vibe)) state.activeVibe = params.vibe;
   if (params.tab && ["schedule", "routes", "crew"].includes(params.tab)) state.activeTab = params.tab;
-  if (state.riders.join("|") === "Student 1|Student 2|Student 3") {
-    state.riders = defaultRiders;
-    saveRiders();
-  }
-  if (state.preferences.weeknightTime === "18:00" || state.preferences.saturdayTime === "10:00") {
-    if (state.preferences.weeknightTime === "18:00") state.preferences.weeknightTime = defaultPreferences.weeknightTime;
-    if (state.preferences.saturdayTime === "10:00") state.preferences.saturdayTime = defaultPreferences.saturdayTime;
-    savePreferences();
-  }
   renderCrewControls();
   initMap();
   initEvents();

@@ -91,3 +91,10 @@ Route geometry is approximate waypoint geometry for planning and visualization, 
 - Spawned three research agents for Minneapolis/UMN, Saint Paul/east metro, and regional/west/south trails.
 - Added a route-level `learnMore` catalog with curated local-history, ride-preview, official-context, blog, and video links.
 - Kept official trail/status source links separate from the discovery links so closures and authoritative trail pages still have their own lower-friction place in the UI.
+
+## Crew board simplification
+
+- User pointed out that global weeknight/Saturday meet defaults and the Crew Sync WhatsApp button were clutter.
+- Removed the global meet controls from the Crew board; meet time, meet spot, and notes are now edited per ride in the selected route panel.
+- Removed the WhatsApp sync-link shortcut from Crew Sync because sharing the sync URL is a one-time setup.
+- Confirmed the sync link is tied to the shared crew document id, not to commits; removed old local migration shims to keep the frontend lean.

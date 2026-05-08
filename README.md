@@ -24,9 +24,9 @@ Primary sources include Minneapolis Park and Recreation Board, Three Rivers Park
 - Vibe and energy filters.
 - Per-browser completion tracking.
 - WhatsApp ride-plan handoff for Sri, Apurv, and Ayaan.
-- Custom rider names, meet times, meet spot, and Strava club link.
+- Custom rider names, optional Strava club and Photos links, and per-ride meet setup.
 - Per-ride RSVP chips for quick local planning.
-- Default 6:30 AM meet time with per-ride meet-time, meet-spot, and note overrides.
+- Default 6:30 AM meet time with per-ride meet-time, meet-spot, and note overrides in the route panel.
 - Refreshable upcoming route picks, while completed rides and the Grand Rounds finale stay locked.
 - Strava app handoff for starting a recording, plus an optional separate club link.
 - Shared crew sync link for names, settings, RSVPs, completed rides, route queue, and ride overrides.
@@ -83,4 +83,4 @@ http://YOUR-IP:4173/
 
 `127.0.0.1` only works on your own computer. `0.0.0.0` starts the server, but it is not the link to share.
 
-Without Crew Sync, names, RSVPs, completed rides, and refreshed route order are stored per browser. With Crew Sync enabled, the app stores shared crew state in a small MantleDB JSON document. Share the sync link with the other two riders once; anyone with that link can read and update the crew plan. The Photos button is only a shortcut; album privacy is controlled in Google Photos.
+Without Crew Sync, names, RSVPs, completed rides, and refreshed route order are stored per browser. With Crew Sync enabled, the app stores shared crew state in a small MantleDB JSON document. Share the sync link with the other two riders once; anyone with that link can read and update the crew plan. New code deploys do not change the sync link id. The Photos button is only a shortcut; album privacy is controlled in Google Photos.
