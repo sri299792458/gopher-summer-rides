@@ -281,7 +281,7 @@ h3 {
 
 .next-ride-actions {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
   gap: 8px;
 }
 
@@ -297,7 +297,9 @@ h3 {
   gap: 7px;
   font-size: 0.82rem;
   font-weight: 850;
+  font-family: inherit;
   text-decoration: none;
+  cursor: pointer;
 }
 
 .mini-action svg {

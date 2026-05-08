@@ -138,3 +138,9 @@ Route geometry is approximate waypoint geometry for planning and visualization, 
 - Added a narrow Crew Sync reliability pass: when the app regains focus, becomes visible, or comes back online, it quietly checks the shared plan instead of waiting only for the next interval.
 - Added an in-flight guard and short throttle so focus/visibility events do not stack overlapping sync pulls.
 - Bumped the static asset version so mobile Chrome fetches this sync fix from GitHub Pages.
+
+## Next ride swap
+
+- Added a shared "Swap" action to the next-ride strip when the next unfinished ride is editable.
+- The swap trades the next open ride with a later unpinned route that matches the energy filter, pins the new pick as a crew choice, and syncs it without reshuffling the whole summer queue.
+- Kept fixed kickoff/finale rides locked, and kept the action out of the strip when the visible next ride is not editable.

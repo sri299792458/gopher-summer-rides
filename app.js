@@ -1018,6 +1018,63 @@ function getNextEditableScheduleSlot() {
   return null;
 }
 
+function getBackupCandidatesForSlot(targetSlot) {
+  const allowedEnergy = energyFilter.value;
+  const completedRouteIds = getCompletedRouteIds();
+  const targetDate = parseDateValue(targetSlot.date);
+  const currentRouteId = targetSlot.routeId;
+  const scheduledRouteIds = new Set();
+  const candidates = [];
+
+  for (const week of schedule) {
+    for (const slot of week.slots) {
+      if (slot.routeId) scheduledRouteIds.add(slot.routeId);
+      if (slot.id === targetSlot.id || slot.fixedRouteId || state.planPins[slot.id] || parseDateValue(slot.date) < targetDate || isRideDone(slot)) continue;
+      const route = routeById.get(slot.routeId);
+      if (!route || route.id === currentRouteId || completedRouteIds.has(route.id)) continue;
+      if (allowedEnergy !== "all" && route.energy !== allowedEnergy) continue;
+      candidates.push({ slot, route });
+    }
+  }
+
+  routes.forEach((route) => {
+    if (!route.custom || scheduledRouteIds.has(route.id) || completedRouteIds.has(route.id)) return;
+    if (allowedEnergy !== "all" && route.energy !== allowedEnergy) return;
+    candidates.push({ slot: null, route });
+  });
+
+  return candidates;
+}
+
+function swapNextOpenRide() {
+  const slot = getNextEditableScheduleSlot();
+  if (!slot) {
+    showToast("No editable ride left to swap.");
+    return;
+  }
+
+  const candidates = getBackupCandidatesForSlot(slot);
+  if (!candidates.length) {
+    showToast("No backup ride matches that energy.");
+    return;
+  }
+
+  const currentRouteId = slot.routeId;
+  const picked = candidates[Math.floor(Math.random() * candidates.length)];
+  state.planAssignments[slot.id] = picked.route.id;
+  state.planPins[slot.id] = true;
+  if (picked.slot && currentRouteId) {
+    state.planAssignments[picked.slot.id] = currentRouteId;
+    delete state.planPins[picked.slot.id];
+  }
+  state.selectedRouteId = picked.route.id;
+  savePlanState();
+  refreshSchedule({ preserve: true });
+  renderAll();
+  updateUrlState();
+  showToast(`${picked.route.name} is now the next open ride.`);
+}
+
 function planRouteForNextRide(routeId) {
   const route = routeById.get(routeId);
   if (!route) return;
@@ -1434,6 +1491,7 @@ function renderNextRideStrip() {
 
   const { slot, route } = nextRide;
   const routeMapAction = getRouteMapAction(route);
+  const canSwapRide = !slot.fixedRouteId && !isRideDone(slot);
   nextRideStrip.classList.remove("is-empty");
   nextRideStrip.innerHTML = `
     <div class="next-ride-main">
@@ -1457,6 +1515,14 @@ function renderNextRideStrip() {
         <i data-lucide="message-circle"></i>
         <span>WhatsApp</span>
       </a>
+      ${
+        canSwapRide
+          ? `<button class="mini-action" type="button" data-swap-next-ride aria-label="Swap ${escapeHtml(route.name)} with another upcoming ride">
+              <i data-lucide="shuffle"></i>
+              <span>Swap</span>
+            </button>`
+          : ""
+      }
     </div>
   `;
   renderIcons();
@@ -1974,6 +2040,7 @@ function initEvents() {
     const completionButton = event.target.closest("[data-toggle-route-complete]");
     const deleteCustomButton = event.target.closest("[data-delete-custom-route]");
     const planNextButton = event.target.closest("[data-plan-next-route]");
+    const swapNextButton = event.target.closest("[data-swap-next-ride]");
     const disabledLink = event.target.closest("a.is-disabled");
 
     if (disabledLink) {
@@ -2007,6 +2074,11 @@ function initEvents() {
 
     if (planNextButton) {
       planRouteForNextRide(planNextButton.dataset.planNextRoute);
+      return;
+    }
+
+    if (swapNextButton) {
+      swapNextOpenRide();
       return;
     }
 
