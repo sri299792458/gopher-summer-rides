@@ -83,4 +83,4 @@ http://YOUR-IP:4173/
 
 `127.0.0.1` only works on your own computer. `0.0.0.0` starts the server, but it is not the link to share.
 
-Without Crew Sync, names, RSVPs, completed rides, and refreshed route order are stored per browser. With Crew Sync enabled, the app stores shared crew state in a small MantleDB JSON document. Share the sync link with the other two riders once; anyone with that link can read and update the crew plan. New code deploys do not change the sync link id. The Photos button is only a shortcut; album privacy is controlled in Google Photos.
+Without Crew Sync, names, RSVPs, completed rides, and refreshed route order are stored per browser. With Crew Sync enabled, the app stores shared crew state in a small MantleDB JSON document. Share the sync link with the other two riders once; anyone with that link can read and update the crew plan. New code deploys do not change the sync link id. Shared sync and route links point at the public GitHub Pages site even when copied from local development. The Photos button is only a shortcut; album privacy is controlled in Google Photos.

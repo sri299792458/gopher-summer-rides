@@ -6,6 +6,7 @@ const initialSearchParams = new URLSearchParams(window.location.search);
 const syncApiBase = "https://mantledb.sh/v2";
 const syncPath = "crew-plan";
 const syncPollMs = 8000;
+const publicAppUrl = "https://sri299792458.github.io/gopher-summer-rides/";
 let scheduleSlots = [];
 let schedule = [];
 let lastScheduledWeek;
@@ -396,12 +397,26 @@ function getSyncEndpoint(id = syncState.id) {
   return `${syncApiBase}/${encodeURIComponent(id)}/${syncPath}`;
 }
 
-function getSyncLink() {
+function getShareUrlBase() {
+  if (["localhost", "127.0.0.1", "::1"].includes(window.location.hostname)) {
+    return new URL(publicAppUrl);
+  }
   const url = new URL(window.location.href);
   url.search = "";
-  url.searchParams.set("sync", syncState.id);
-  url.searchParams.set("tab", "crew");
+  url.hash = "";
+  return url;
+}
+
+function buildShareUrl(params) {
+  const url = getShareUrlBase();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value) url.searchParams.set(key, value);
+  });
   return url.toString();
+}
+
+function getSyncLink() {
+  return buildShareUrl({ sync: syncState.id, tab: "crew" });
 }
 
 function updateSyncControls(message, tone = "idle") {
@@ -649,12 +664,7 @@ function updateUrlState() {
 }
 
 function buildRouteUrl(routeId) {
-  const url = new URL(window.location.href);
-  url.search = "";
-  if (syncState.id) url.searchParams.set("sync", syncState.id);
-  url.searchParams.set("route", routeId);
-  url.searchParams.set("tab", "routes");
-  return url.toString();
+  return buildShareUrl({ sync: syncState.id, route: routeId, tab: "routes" });
 }
 
 function showToast(message) {

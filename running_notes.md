@@ -98,3 +98,4 @@ Route geometry is approximate waypoint geometry for planning and visualization, 
 - Removed the global meet controls from the Crew board; meet time, meet spot, and notes are now edited per ride in the selected route panel.
 - Removed the WhatsApp sync-link shortcut from Crew Sync because sharing the sync URL is a one-time setup.
 - Confirmed the sync link is tied to the shared crew document id, not to commits; removed old local migration shims to keep the frontend lean.
+- Fixed local development share links so copied sync links and WhatsApp route-plan URLs point at GitHub Pages instead of `127.0.0.1`.
