@@ -9,6 +9,7 @@ const initialSearchParams = new URLSearchParams(window.location.search);
 const syncApiBase = "https://mantledb.sh/v2";
 const syncPath = "crew-plan";
 const syncPollMs = 8000;
+const publicAppUrl = "https://sri299792458.github.io/gopher-summer-rides/";
 let scheduleSlots = [];
 let schedule = [];
 let lastScheduledWeek;
@@ -542,8 +543,18 @@ function getSyncEndpoint(id = syncState.id) {
   return `${syncApiBase}/${encodeURIComponent(id)}/${syncPath}`;
 }
 
+function isLocalShareHost(url) {
+  const hostname = url.hostname.toLowerCase();
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "0.0.0.0" || hostname === "::1";
+}
+
+function getShareBaseUrl() {
+  const current = new URL(window.location.href);
+  return isLocalShareHost(current) ? new URL(publicAppUrl) : current;
+}
+
 function getSyncLink() {
-  const url = new URL(window.location.href);
+  const url = getShareBaseUrl();
   url.search = "";
   url.hash = "";
   url.searchParams.set("sync", syncState.id);
@@ -563,9 +574,10 @@ function getSyncDetailText(tone) {
   if (tone === "error") return "Keep this tab open and use Pull when the connection is back.";
   const syncedAt = formatSyncTime(syncState.lastRemoteUpdatedAt);
   const intervalSeconds = Math.round(syncPollMs / 1000);
+  const localNote = isLocalShareHost(new URL(window.location.href)) ? " Shared links use the public site." : "";
   return syncedAt
-    ? `Auto-checking every ${intervalSeconds} sec. Last sync ${syncedAt}.`
-    : `Auto-checking every ${intervalSeconds} sec once connected.`;
+    ? `Auto-checking every ${intervalSeconds} sec. Last sync ${syncedAt}.${localNote}`
+    : `Auto-checking every ${intervalSeconds} sec once connected.${localNote}`;
 }
 
 function updateSyncControls(message, tone = "idle") {
@@ -920,7 +932,7 @@ function updateUrlState() {
 }
 
 function buildRouteUrl(routeId) {
-  const url = new URL(window.location.href);
+  const url = getShareBaseUrl();
   url.search = "";
   url.hash = "";
   if (syncState.id) url.searchParams.set("sync", syncState.id);

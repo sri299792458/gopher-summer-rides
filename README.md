@@ -25,6 +25,7 @@ Primary sources include Minneapolis Park and Recreation Board, Three Rivers Park
 - Vibe and energy filters.
 - Per-browser completion tracking.
 - WhatsApp ride-plan handoff for Sri, Apurv, and Ayaan.
+- Shared route and sync links use the public Pages URL even when testing locally.
 - Crew-added custom routes shared through Crew Sync.
 - Exact custom route/map links become the shared map button for the crew.
 - Route ideas can auto-estimate ride time when only distance is entered.
