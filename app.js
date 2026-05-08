@@ -6,7 +6,6 @@ const initialSearchParams = new URLSearchParams(window.location.search);
 const syncApiBase = "https://mantledb.sh/v2";
 const syncPath = "crew-plan";
 const syncPollMs = 8000;
-const publicAppUrl = "https://sri299792458.github.io/gopher-summer-rides/";
 let scheduleSlots = [];
 let schedule = [];
 let lastScheduledWeek;
@@ -14,12 +13,44 @@ let summerStart;
 let summerEnd;
 let totalScheduledRides = routes.length;
 
+function readLocalValue(key) {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeLocalValue(key, value) {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // Some mobile in-app/private browsers block localStorage. Keep the app usable without persistence.
+  }
+}
+
+function removeLocalValue(key) {
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    // Storage may be unavailable on mobile; nothing to remove in that case.
+  }
+}
+
+function randomId(prefix = "") {
+  const id =
+    window.crypto && typeof window.crypto.randomUUID === "function"
+      ? window.crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  return prefix ? `${prefix}-${id}` : id;
+}
+
 function safeJsonStorage(key, fallback) {
   try {
-    const value = localStorage.getItem(key);
+    const value = readLocalValue(key);
     return value ? JSON.parse(value) : fallback;
   } catch {
-    localStorage.removeItem(key);
+    removeLocalValue(key);
     return fallback;
   }
 }
@@ -35,15 +66,15 @@ function safeObjectStorage(key, fallback) {
 }
 
 function safeNumberStorage(key, fallback) {
-  const value = Number(localStorage.getItem(key));
+  const value = Number(readLocalValue(key));
   return Number.isFinite(value) ? value : fallback;
 }
 
 function getOrCreateClientId() {
-  const existing = localStorage.getItem("crewSyncClientId");
+  const existing = readLocalValue("crewSyncClientId");
   if (existing) return existing;
-  const next = crypto.randomUUID ? crypto.randomUUID() : `client-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  localStorage.setItem("crewSyncClientId", next);
+  const next = randomId("client");
+  writeLocalValue("crewSyncClientId", next);
   return next;
 }
 
@@ -70,7 +101,7 @@ const state = {
 };
 
 const syncState = {
-  id: initialSearchParams.get("sync") || localStorage.getItem("crewSyncBlobId") || "",
+  id: initialSearchParams.get("sync") || readLocalValue("crewSyncBlobId") || "",
   clientId: getOrCreateClientId(),
   lastRemoteUpdatedAt: safeNumberStorage("crewSyncLastUpdatedAt", 0),
   saveTimer: null,
@@ -206,7 +237,7 @@ function groupScheduleSlots(slots, weekSize) {
 
 function buildScheduleSlots(plan, routeList) {
   const knownRouteIds = new Set(routeList.map((route) => route.id));
-  if (!plan.cadence?.length) throw new Error("Schedule plan needs at least one cadence day.");
+  if (!plan.cadence || !plan.cadence.length) throw new Error("Schedule plan needs at least one cadence day.");
 
   const kickoffSlots = (plan.kickoff || [])
     .map((slot) => {
@@ -247,7 +278,7 @@ function buildScheduleSlots(plan, routeList) {
     });
   }
 
-  const earliestFinaleDate = addDays(cursor, plan.finaleRestDays ?? 0);
+  const earliestFinaleDate = addDays(cursor, plan.finaleRestDays || 0);
   let finaleDate = nextDayOnOrAfter(earliestFinaleDate, plan.finaleDay);
   if (finaleDate <= cursor) {
     finaleDate = nextDayOnOrAfter(addDays(cursor, 1), plan.finaleDay);
@@ -271,7 +302,7 @@ function buildScheduleSlots(plan, routeList) {
 
 function energyFitScore(route, slotIndex, totalSlots) {
   const phase = totalSlots <= 1 ? 1 : slotIndex / (totalSlots - 1);
-  const target = { easy: 0.2, steady: 0.55, big: 0.86 }[route.energy] ?? 0.5;
+  const target = { easy: 0.2, steady: 0.55, big: 0.86 }[route.energy] || 0.5;
   return Math.abs(phase - target) * 5;
 }
 
@@ -280,7 +311,7 @@ function pickAdaptiveRoute(pool, slot, slotIndex, totalSlots, previousRoute, see
   return pool
     .map((routeId) => {
       const route = routeById.get(routeId);
-      const vibePenalty = previousRoute?.vibe === route.vibe ? 1.1 : 0;
+      const vibePenalty = previousRoute && previousRoute.vibe === route.vibe ? 1.1 : 0;
       const bigEarlyPenalty = route.energy === "big" && slotIndex < Math.floor(totalSlots * 0.45) ? 1.7 : 0;
       const seededNoise = (hashString(`${seed}|${slot.date}|${route.id}`) % 1000) / 1000;
       return {
@@ -387,9 +418,9 @@ function routeIdFromRideKey(key) {
 function setSyncId(id) {
   syncState.id = id || "";
   if (syncState.id) {
-    localStorage.setItem("crewSyncBlobId", syncState.id);
+    writeLocalValue("crewSyncBlobId", syncState.id);
   } else {
-    localStorage.removeItem("crewSyncBlobId");
+    removeLocalValue("crewSyncBlobId");
   }
 }
 
@@ -397,26 +428,13 @@ function getSyncEndpoint(id = syncState.id) {
   return `${syncApiBase}/${encodeURIComponent(id)}/${syncPath}`;
 }
 
-function getShareUrlBase() {
-  if (["localhost", "127.0.0.1", "::1"].includes(window.location.hostname)) {
-    return new URL(publicAppUrl);
-  }
+function getSyncLink() {
   const url = new URL(window.location.href);
   url.search = "";
   url.hash = "";
-  return url;
-}
-
-function buildShareUrl(params) {
-  const url = getShareUrlBase();
-  Object.entries(params).forEach(([key, value]) => {
-    if (value) url.searchParams.set(key, value);
-  });
+  url.searchParams.set("sync", syncState.id);
+  url.searchParams.set("tab", "crew");
   return url.toString();
-}
-
-function getSyncLink() {
-  return buildShareUrl({ sync: syncState.id, tab: "crew" });
 }
 
 function updateSyncControls(message, tone = "idle") {
@@ -450,13 +468,13 @@ function getCrewPlanSnapshot() {
 }
 
 function persistLocalCrewState() {
-  localStorage.setItem("completedRides", JSON.stringify([...state.completed]));
-  localStorage.setItem("riders", JSON.stringify(state.riders));
-  localStorage.setItem("ridePreferences", JSON.stringify(state.preferences));
-  localStorage.setItem("rideRsvps", JSON.stringify(state.rsvps));
-  localStorage.setItem("planAssignments", JSON.stringify(state.planAssignments));
-  localStorage.setItem("planSeed", String(state.planSeed));
-  localStorage.setItem("rideOverrides", JSON.stringify(state.rideOverrides));
+  writeLocalValue("completedRides", JSON.stringify([...state.completed]));
+  writeLocalValue("riders", JSON.stringify(state.riders));
+  writeLocalValue("ridePreferences", JSON.stringify(state.preferences));
+  writeLocalValue("rideRsvps", JSON.stringify(state.rsvps));
+  writeLocalValue("planAssignments", JSON.stringify(state.planAssignments));
+  writeLocalValue("planSeed", String(state.planSeed));
+  writeLocalValue("rideOverrides", JSON.stringify(state.rideOverrides));
 }
 
 function renderCrewControls() {
@@ -505,7 +523,7 @@ async function pullCrewSync({ quiet = false } = {}) {
   if (remoteUpdatedAt > syncState.lastRemoteUpdatedAt) {
     applyCrewPlanSnapshot(remote);
     syncState.lastRemoteUpdatedAt = remoteUpdatedAt;
-    localStorage.setItem("crewSyncLastUpdatedAt", String(syncState.lastRemoteUpdatedAt));
+    writeLocalValue("crewSyncLastUpdatedAt", String(syncState.lastRemoteUpdatedAt));
     updateSyncControls("Crew sync updated", "ok");
     showToast("Crew plan updated.");
   } else if (!quiet) {
@@ -525,7 +543,7 @@ async function pushCrewSyncNow() {
   });
   if (!response.ok) throw new Error(`Sync push failed (${response.status})`);
   syncState.lastRemoteUpdatedAt = snapshot.updatedAt;
-  localStorage.setItem("crewSyncLastUpdatedAt", String(syncState.lastRemoteUpdatedAt));
+  writeLocalValue("crewSyncLastUpdatedAt", String(syncState.lastRemoteUpdatedAt));
   updateSyncControls("Synced just now", "ok");
 }
 
@@ -561,7 +579,7 @@ async function createCrewSync() {
   syncState.busy = true;
   updateSyncControls("Creating crew sync...", "busy");
   const snapshot = getCrewPlanSnapshot();
-  const id = `gopher-rides-${crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`}`;
+  const id = randomId("gopher-rides");
   const response = await fetch(getSyncEndpoint(id), {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -570,7 +588,7 @@ async function createCrewSync() {
   if (!response.ok) throw new Error(`Sync create failed (${response.status})`);
   setSyncId(id);
   syncState.lastRemoteUpdatedAt = snapshot.updatedAt;
-  localStorage.setItem("crewSyncLastUpdatedAt", String(syncState.lastRemoteUpdatedAt));
+  writeLocalValue("crewSyncLastUpdatedAt", String(syncState.lastRemoteUpdatedAt));
   syncState.ready = true;
   syncState.busy = false;
   updateUrlState();
@@ -609,33 +627,33 @@ function refreshUpcomingPlan() {
 }
 
 function saveCompleted() {
-  localStorage.setItem("completedRides", JSON.stringify([...state.completed]));
+  writeLocalValue("completedRides", JSON.stringify([...state.completed]));
   queueSyncPush();
 }
 
 function saveRiders() {
-  localStorage.setItem("riders", JSON.stringify(state.riders));
+  writeLocalValue("riders", JSON.stringify(state.riders));
   queueSyncPush();
 }
 
 function savePreferences() {
-  localStorage.setItem("ridePreferences", JSON.stringify(state.preferences));
+  writeLocalValue("ridePreferences", JSON.stringify(state.preferences));
   queueSyncPush();
 }
 
 function saveRsvps() {
-  localStorage.setItem("rideRsvps", JSON.stringify(state.rsvps));
+  writeLocalValue("rideRsvps", JSON.stringify(state.rsvps));
   queueSyncPush();
 }
 
 function savePlanState() {
-  localStorage.setItem("planAssignments", JSON.stringify(state.planAssignments));
-  localStorage.setItem("planSeed", String(state.planSeed));
+  writeLocalValue("planAssignments", JSON.stringify(state.planAssignments));
+  writeLocalValue("planSeed", String(state.planSeed));
   queueSyncPush();
 }
 
 function saveRideOverrides() {
-  localStorage.setItem("rideOverrides", JSON.stringify(state.rideOverrides));
+  writeLocalValue("rideOverrides", JSON.stringify(state.rideOverrides));
   queueSyncPush();
 }
 
@@ -664,7 +682,13 @@ function updateUrlState() {
 }
 
 function buildRouteUrl(routeId) {
-  return buildShareUrl({ sync: syncState.id, route: routeId, tab: "routes" });
+  const url = new URL(window.location.href);
+  url.search = "";
+  url.hash = "";
+  if (syncState.id) url.searchParams.set("sync", syncState.id);
+  url.searchParams.set("route", routeId);
+  url.searchParams.set("tab", "routes");
+  return url.toString();
 }
 
 function showToast(message) {
@@ -703,18 +727,18 @@ function getGoogleMapsUrl(route) {
 function getRideMeetTime(slotOrDay) {
   const day = typeof slotOrDay === "string" ? slotOrDay : slotOrDay.day;
   const override = typeof slotOrDay === "string" ? null : state.rideOverrides[slotOrDay.id];
-  if (override?.time) return override.time;
+  if (override && override.time) return override.time;
   return day === "Sat" ? state.preferences.saturdayTime : state.preferences.weeknightTime;
 }
 
 function getRideMeetSpot(slot) {
-  if (slot && state.rideOverrides[slot.id]?.spot) return state.rideOverrides[slot.id].spot;
+  if (slot && state.rideOverrides[slot.id] && state.rideOverrides[slot.id].spot) return state.rideOverrides[slot.id].spot;
   return state.preferences.meetSpot;
 }
 
 function getRidePlanNote(slot) {
   if (!slot) return "";
-  return state.rideOverrides[slot.id]?.note || "";
+  return state.rideOverrides[slot.id] && state.rideOverrides[slot.id].note ? state.rideOverrides[slot.id].note : "";
 }
 
 function updateRideOverride(slotId, field, rawValue) {
@@ -770,7 +794,7 @@ const rsvpLabels = {
 };
 
 function getRsvp(key, riderIndex) {
-  return state.rsvps[key]?.[riderIndex] || "";
+  return state.rsvps[key] && state.rsvps[key][riderIndex] ? state.rsvps[key][riderIndex] : "";
 }
 
 function cycleRsvp(key, riderIndex) {
@@ -822,7 +846,7 @@ function getStravaClubUrl() {
 }
 
 function getPhotosAlbumUrl() {
-  return state.preferences.photosAlbum?.startsWith("http") ? state.preferences.photosAlbum : "";
+  return state.preferences.photosAlbum && state.preferences.photosAlbum.startsWith("http") ? state.preferences.photosAlbum : "";
 }
 
 function getStravaLaunchUrl() {
@@ -1093,7 +1117,7 @@ function renderSelectedRoute() {
   const routeSources = (route.sourceKeys || [])
     .map((key) => sources[key])
     .filter(Boolean);
-  const learnMoreLinks = (route.learnMore || []).filter((link) => link?.url);
+  const learnMoreLinks = (route.learnMore || []).filter((link) => link && link.url);
   const caveat = route.caveat ? `<p class="route-caveat">${route.caveat}</p>` : "";
   selectedTitle.textContent = route.name;
   selectedVibe.textContent = route.vibe;
@@ -1276,6 +1300,28 @@ function renderAll() {
   renderSelectedRoute();
 }
 
+function renderStartupError(error) {
+  console.error(error);
+  const message = "The planner hit a startup error. Refresh once; if it stays blank, open the live link in Chrome.";
+  if (weekRides) {
+    weekRides.innerHTML = `<div class="empty-state"><h3>Could not load rides</h3><p>${message}</p></div>`;
+  }
+  if (detailDock) {
+    detailDock.innerHTML = `<div class="empty-state"><h3>Startup error</h3><p>${message}</p></div>`;
+  }
+  showMapFallback("Map did not start, but the ride plan can still load.");
+}
+
+function safelyInitMap() {
+  try {
+    initMap();
+    renderSelectedRoute();
+  } catch (error) {
+    console.error(error);
+    showMapFallback("Map did not start. The ride plan still works.");
+  }
+}
+
 function selectRoute(routeId) {
   if (!routeById.has(routeId)) return;
   state.selectedRouteId = routeId;
@@ -1284,8 +1330,22 @@ function selectRoute(routeId) {
 }
 
 function focusSelectedRoutePanel() {
-  if (!window.matchMedia("(max-width: 960px)").matches) return;
-  document.querySelector(".map-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  if (!window.matchMedia || !window.matchMedia("(max-width: 960px)").matches) return;
+  const panel = document.querySelector(".map-panel");
+  if (panel) panel.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function focusInitialMobileDeepLink(params) {
+  if (!window.matchMedia || !window.matchMedia("(max-width: 960px)").matches) return;
+  const target = params.route
+    ? document.querySelector(".map-panel")
+    : params.tab && params.tab !== "schedule"
+      ? document.querySelector(".views-panel")
+      : null;
+  if (!target) return;
+  window.setTimeout(() => {
+    target.scrollIntoView({ behavior: "auto", block: "start" });
+  }, 150);
 }
 
 function pickBackupRide() {
@@ -1366,6 +1426,7 @@ function initEvents() {
 
     if (routeButton) {
       selectRoute(routeButton.dataset.route);
+      focusSelectedRoutePanel();
       return;
     }
 
@@ -1481,18 +1542,25 @@ function boot() {
   if (params.vibe && ["all", "water", "city", "green", "destination"].includes(params.vibe)) state.activeVibe = params.vibe;
   if (params.tab && ["schedule", "routes", "crew"].includes(params.tab)) state.activeTab = params.tab;
   renderCrewControls();
-  initMap();
   initEvents();
   updateSyncControls();
   renderAll();
   setActiveTab(state.activeTab);
+  safelyInitMap();
   document.querySelectorAll(".filter-chip").forEach((button) => {
     const isActive = button.dataset.vibe === state.activeVibe;
     button.classList.toggle("is-active", isActive);
     button.setAttribute("aria-pressed", String(isActive));
   });
-  if (syncState.id) startSyncPolling();
+  if (syncState.id) {
+    window.setTimeout(() => startSyncPolling(), 0);
+  }
+  focusInitialMobileDeepLink(params);
 }
 
-boot();
+try {
+  boot();
+} catch (error) {
+  renderStartupError(error);
+}
 })();

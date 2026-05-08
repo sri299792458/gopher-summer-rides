@@ -98,4 +98,10 @@ Route geometry is approximate waypoint geometry for planning and visualization, 
 - Removed the global meet controls from the Crew board; meet time, meet spot, and notes are now edited per ride in the selected route panel.
 - Removed the WhatsApp sync-link shortcut from Crew Sync because sharing the sync URL is a one-time setup.
 - Confirmed the sync link is tied to the shared crew document id, not to commits; removed old local migration shims to keep the frontend lean.
-- Fixed local development share links so copied sync links and WhatsApp route-plan URLs point at GitHub Pages instead of `127.0.0.1`.
+
+## Mobile startup fix
+
+- User shared an Android Chrome screenshot showing the static shell only: no ride cards, no map tiles, and no icons.
+- Reverted the mistaken public-link assumption from the prior fix attempt.
+- Hardened startup after the sync work: localStorage failures no longer crash boot, newer optional/nullish syntax was removed, ride content renders before map/sync startup, and map/sync failures are isolated from first paint.
+- Added versioned asset URLs for the app CSS/data/JS so mobile Chrome fetches the fixed bundle instead of a stale cached script.
