@@ -227,6 +227,84 @@ h3 {
   padding: 16px;
 }
 
+.next-ride-strip {
+  display: grid;
+  gap: 10px;
+  margin: 14px 0 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.next-ride-strip.is-empty {
+  color: var(--muted);
+}
+
+.next-ride-strip.is-empty strong {
+  color: var(--ink);
+}
+
+.next-ride-main {
+  min-width: 0;
+}
+
+.next-ride-select {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  text-align: left;
+}
+
+.next-ride-select span:first-child {
+  color: var(--green);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.next-ride-select strong {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.next-ride-select h3 {
+  margin: 0;
+  color: var(--maroon);
+  font-size: 1.05rem;
+  line-height: 1.15;
+}
+
+.next-ride-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.mini-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  border: 1px solid rgba(47, 128, 160, 0.3);
+  border-radius: var(--radius);
+  background: #eef7fb;
+  color: var(--river);
+  gap: 7px;
+  font-size: 0.82rem;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.mini-action svg {
+  width: 17px;
+  height: 17px;
+}
+
 .season-meter {
   min-width: 92px;
   text-align: right;

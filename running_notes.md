@@ -122,3 +122,4 @@ Route geometry is approximate waypoint geometry for planning and visualization, 
 - Continued post-ride logging polish: Strava activity URLs now show immediate saved feedback and expose the saved activity link without waiting for another render.
 - Started the long-running product goal: custom route ideas can now be deliberately planned into the next unfinished flexible ride, marked as crew picks, preserved through refreshes, and shared through Crew Sync.
 - Reliability follow-up: unplanned custom route ideas remain valid library ideas and no longer make the schedule validator expect every custom idea to appear in the summer queue.
+- Morning-use follow-up: the top planner now shows a next-ride strip with the upcoming unfinished ride, meet details, route map action, and WhatsApp handoff before the longer weekly list.

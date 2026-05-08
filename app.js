@@ -135,6 +135,7 @@ const syncState = {
 const dateInput = document.querySelector("#dateInput");
 const energyFilter = document.querySelector("#energyFilter");
 const weekLabel = document.querySelector("#weekLabel");
+const nextRideStrip = document.querySelector("#nextRideStrip");
 const weekRides = document.querySelector("#weekRides");
 const scheduleList = document.querySelector("#scheduleList");
 const routeList = document.querySelector("#routeList");
@@ -929,6 +930,18 @@ function getSelectedScheduleSlot(routeId) {
   return null;
 }
 
+function getNextRideFromDate(value) {
+  const cutoff = clampDate(parseDateValue(value));
+  for (const week of schedule) {
+    for (const slot of week.slots) {
+      const route = routeById.get(slot.routeId);
+      if (!route || parseDateValue(slot.date) < cutoff || isRideDone(slot)) continue;
+      return { week, slot, route };
+    }
+  }
+  return null;
+}
+
 function getNextEditableScheduleSlot() {
   const cutoff = clampDate(parseDateValue(dateInput.value));
   for (const week of schedule) {
@@ -1039,6 +1052,7 @@ function updateRideOverride(slotId, field, rawValue) {
   const spotDisplay = document.querySelector("[data-selected-meet-spot]");
   if (timeDisplay) timeDisplay.textContent = getRideMeetTime(slot);
   if (spotDisplay) spotDisplay.textContent = getRideMeetSpot(slot);
+  renderNextRideStrip();
 }
 
 function updateActivityLink(key, rawValue) {
@@ -1325,6 +1339,48 @@ function renderWeek() {
     })
     .join("");
 
+  renderIcons();
+}
+
+function renderNextRideStrip() {
+  if (!nextRideStrip) return;
+  const nextRide = getNextRideFromDate(dateInput.value);
+  if (!nextRide) {
+    nextRideStrip.classList.add("is-empty");
+    nextRideStrip.innerHTML = `
+      <p class="eyebrow">Next ride</p>
+      <strong>Summer queue complete</strong>
+    `;
+    return;
+  }
+
+  const { slot, route } = nextRide;
+  const routeMapAction = getRouteMapAction(route);
+  nextRideStrip.classList.remove("is-empty");
+  nextRideStrip.innerHTML = `
+    <div class="next-ride-main">
+      <button type="button" class="next-ride-select" data-route="${escapeHtml(route.id)}">
+        <span>Next ride</span>
+        <strong>${escapeHtml(slot.label)}, ${escapeHtml(formatRideDate(slot))} at ${escapeHtml(getRideMeetTime(slot))}</strong>
+        <h3>${escapeHtml(route.name)}</h3>
+        <p class="meta-line">
+          <span>${route.miles} approx mi</span>
+          <span>${escapeHtml(getRideMeetSpot(slot))}</span>
+          ${state.planPins[slot.id] ? '<span class="badge badge-picked">crew pick</span>' : ""}
+        </p>
+      </button>
+    </div>
+    <div class="next-ride-actions">
+      <a class="mini-action" href="${escapeHtml(routeMapAction.url)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHtml(routeMapAction.label)} for ${escapeHtml(route.name)}">
+        <i data-lucide="${routeMapAction.exact ? "navigation" : "map-pin"}"></i>
+        <span>Map</span>
+      </a>
+      <a class="mini-action" href="${getWhatsAppUrl(route)}" target="_blank" rel="noopener noreferrer" aria-label="Send ${escapeHtml(route.name)} to WhatsApp">
+        <i data-lucide="message-circle"></i>
+        <span>WhatsApp</span>
+      </a>
+    </div>
+  `;
   renderIcons();
 }
 
@@ -1652,6 +1708,7 @@ function renderIcons() {
 }
 
 function renderAll() {
+  renderNextRideStrip();
   renderWeek();
   renderSchedule();
   renderRoutes();
@@ -1790,6 +1847,7 @@ function initEvents() {
 
     if (rsvpButton) {
       cycleRsvp(rsvpButton.dataset.rsvpKey, rsvpButton.dataset.riderIndex);
+      renderNextRideStrip();
       renderWeek();
       renderSelectedRoute();
       return;
@@ -1898,6 +1956,7 @@ function initEvents() {
     input.addEventListener("input", () => {
       state.riders[index] = input.value;
       saveRiders();
+      renderNextRideStrip();
       renderSelectedRoute();
     });
   });
@@ -1907,6 +1966,7 @@ function initEvents() {
     input.addEventListener("input", () => {
       state.preferences[key] = input.value;
       savePreferences();
+      renderNextRideStrip();
       renderSelectedRoute();
     });
   });
