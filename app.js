@@ -233,11 +233,11 @@ function hashString(value) {
   return hash >>> 0;
 }
 
-function validateScheduledRouteIds(knownRouteIds, slots, requireEveryKnownRoute = true) {
+function validateScheduledRouteIds(knownRouteIds, slots, requiredRouteIds = new Set()) {
   const scheduledIds = slots.map((slot) => slot.routeId).filter(Boolean);
   const missingIds = scheduledIds.filter((routeId) => !knownRouteIds.has(routeId));
   const duplicateIds = scheduledIds.filter((routeId, index) => scheduledIds.indexOf(routeId) !== index);
-  const unscheduledIds = requireEveryKnownRoute ? [...knownRouteIds].filter((routeId) => !scheduledIds.includes(routeId)) : [];
+  const unscheduledIds = [...requiredRouteIds].filter((routeId) => !scheduledIds.includes(routeId));
 
   if (missingIds.length || duplicateIds.length || unscheduledIds.length) {
     throw new Error(
@@ -470,7 +470,8 @@ function buildScheduleFromAssignments() {
     const route = routeById.get(slot.routeId);
     return route && route.custom;
   });
-  validateScheduledRouteIds(new Set(routes.map((route) => route.id)), slots, !hasCrewPickedCustomRoute);
+  const requiredRouteIds = hasCrewPickedCustomRoute ? new Set() : new Set(baseRoutes.map((route) => route.id));
+  validateScheduledRouteIds(new Set(routes.map((route) => route.id)), slots, requiredRouteIds);
   return groupScheduleSlots(slots, schedulePlan.weekSize || 3);
 }
 
