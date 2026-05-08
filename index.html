@@ -12,7 +12,7 @@
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       crossorigin=""
     />
-    <link rel="stylesheet" href="styles.css?v=20260508-next-ride-strip" />
+    <link rel="stylesheet" href="styles.css?v=20260508-crew-ride-log" />
   </head>
   <body>
     <div class="app-shell">
@@ -256,6 +256,12 @@
               </div>
             </div>
             <div class="achievement-list" id="achievementList" aria-label="Summer achievements"></div>
+            <section class="ride-log-panel" aria-labelledby="rideLogTitle">
+              <div class="panel-title-row compact-title-row">
+                <h3 id="rideLogTitle">Ride log</h3>
+              </div>
+              <div class="ride-log-list" id="rideLogList" aria-live="polite"></div>
+            </section>
             <div class="source-block">
               <h3>Check before rolling</h3>
               <a href="https://www.minneapolisparks.org/parks-destinations/trails-parkways/" target="_blank" rel="noopener noreferrer">Minneapolis trails</a>
@@ -275,7 +281,7 @@
       crossorigin=""
     ></script>
     <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.js"></script>
-    <script src="data/dataset.js?v=20260508-next-ride-strip"></script>
-    <script src="app.js?v=20260508-next-ride-strip"></script>
+    <script src="data/dataset.js?v=20260508-crew-ride-log"></script>
+    <script src="app.js?v=20260508-crew-ride-log"></script>
   </body>
 </html>

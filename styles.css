@@ -1216,6 +1216,80 @@ h3 {
   color: var(--green);
 }
 
+.ride-log-panel {
+  margin: 14px 0;
+}
+
+.compact-title-row {
+  margin-bottom: 8px;
+}
+
+.compact-title-row h3 {
+  margin: 0;
+}
+
+.ride-log-list {
+  display: grid;
+  gap: 8px;
+}
+
+.ride-log-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+}
+
+.ride-log-item button {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  text-align: left;
+}
+
+.ride-log-item strong {
+  min-width: 0;
+  color: var(--ink);
+  font-size: 0.88rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.ride-log-item span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 760;
+}
+
+.missing-activity,
+.empty-log span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 780;
+}
+
+.empty-log {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.empty-log strong {
+  color: var(--ink);
+  font-size: 0.9rem;
+}
+
 .source-links a {
   color: var(--river);
   font-size: 0.82rem;

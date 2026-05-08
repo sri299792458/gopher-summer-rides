@@ -151,6 +151,7 @@ const milesDone = document.querySelector("#milesDone");
 const ridesDone = document.querySelector("#ridesDone");
 const longestRide = document.querySelector("#longestRide");
 const achievementList = document.querySelector("#achievementList");
+const rideLogList = document.querySelector("#rideLogList");
 const seasonProgress = document.querySelector("#seasonProgress");
 const meterFill = document.querySelector("#meterFill");
 const riderInputs = [document.querySelector("#riderOne"), document.querySelector("#riderTwo"), document.querySelector("#riderThree")];
@@ -519,6 +520,11 @@ function rideKey(slot) {
 function routeIdFromRideKey(key) {
   if (String(key).startsWith("route:")) return String(key).slice(6);
   const dateKeyMatch = String(key).match(/^\d{4}-\d{2}-\d{2}-(.+)$/);
+  return dateKeyMatch ? dateKeyMatch[1] : "";
+}
+
+function dateFromRideKey(key) {
+  const dateKeyMatch = String(key).match(/^(\d{4}-\d{2}-\d{2})-/);
   return dateKeyMatch ? dateKeyMatch[1] : "";
 }
 
@@ -1071,6 +1077,18 @@ function getActivityLinkStatusText(hasLink) {
   return syncState.id ? "Saved to crew sync." : "Saved on this device.";
 }
 
+function getActivityLinkForRouteKey(key, routeId) {
+  const direct = state.activityLinks[key] && state.activityLinks[key].url ? normalizeExternalUrl(state.activityLinks[key].url) : "";
+  if (direct) return direct;
+  const routeOnlyKey = `route:${routeId}`;
+  const routeOnly = state.activityLinks[routeOnlyKey] && state.activityLinks[routeOnlyKey].url ? normalizeExternalUrl(state.activityLinks[routeOnlyKey].url) : "";
+  if (routeOnly) return routeOnly;
+  const matchingKey = Object.keys(state.activityLinks).find((activityKey) => routeIdFromRideKey(activityKey) === routeId);
+  return matchingKey && state.activityLinks[matchingKey] && state.activityLinks[matchingKey].url
+    ? normalizeExternalUrl(state.activityLinks[matchingKey].url)
+    : "";
+}
+
 function renderActivityLinkFeedback(key) {
   const linkData = state.activityLinks[key];
   const activityLink = linkData && linkData.url ? normalizeExternalUrl(linkData.url) : "";
@@ -1086,6 +1104,7 @@ function renderActivityLinkFeedback(key) {
         : "";
     }
   });
+  renderRideLog();
 }
 
 function getRideStartTimeForIcs(slot) {
@@ -1452,6 +1471,7 @@ function renderStats() {
   seasonProgress.textContent = `${percent}%`;
   meterFill.style.width = `${Math.min(100, percent)}%`;
   renderAchievements(completedDetails, totalMiles, longest);
+  renderRideLog();
 }
 
 function renderAchievements(completedDetails, totalMiles, longest) {
@@ -1469,6 +1489,61 @@ function renderAchievements(completedDetails, totalMiles, longest) {
 
   achievementList.innerHTML = achievements
     .map((achievement) => `<span class="${achievement.unlocked ? "is-unlocked" : ""}">${achievement.name}</span>`)
+    .join("");
+}
+
+function getRideLogEntries() {
+  return [...state.completed]
+    .map((key) => {
+      const routeId = routeIdFromRideKey(key);
+      const route = routeById.get(routeId);
+      if (!route) return null;
+      const date = dateFromRideKey(key);
+      const scheduled = getSelectedScheduleSlot(routeId);
+      return {
+        key,
+        route,
+        date,
+        label: date ? formatRideDate({ date }) : scheduled ? formatRideDate(scheduled.slot) : "Logged ride",
+        activityUrl: getActivityLinkForRouteKey(key, routeId),
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => {
+      if (a.date && b.date) return b.date.localeCompare(a.date);
+      if (a.date) return -1;
+      if (b.date) return 1;
+      return a.route.name.localeCompare(b.route.name);
+    });
+}
+
+function renderRideLog() {
+  if (!rideLogList) return;
+  const entries = getRideLogEntries();
+  if (!entries.length) {
+    rideLogList.innerHTML = `
+      <div class="empty-log">
+        <strong>No rides logged yet</strong>
+        <span>Mark a ride done and it will show up here with its Strava link.</span>
+      </div>
+    `;
+    return;
+  }
+
+  rideLogList.innerHTML = entries
+    .map(({ route, label, activityUrl }) => `
+      <article class="ride-log-item">
+        <button type="button" data-route="${escapeHtml(route.id)}">
+          <strong>${escapeHtml(route.name)}</strong>
+          <span>${escapeHtml(label)} - ${route.miles} approx mi</span>
+        </button>
+        ${
+          activityUrl
+            ? `<a class="activity-open-link" href="${escapeHtml(activityUrl)}" target="_blank" rel="noopener noreferrer">Open Strava</a>`
+            : '<span class="missing-activity">Add Strava in route</span>'
+        }
+      </article>
+    `)
     .join("");
 }
 
