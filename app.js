@@ -984,6 +984,29 @@ function updateActivityLink(key, rawValue) {
     delete state.activityLinks[key];
   }
   saveActivityLinks();
+  renderActivityLinkFeedback(key);
+}
+
+function getActivityLinkStatusText(hasLink) {
+  if (!hasLink) return "Paste after the ride; sync shares it with the crew.";
+  return syncState.id ? "Saved to crew sync." : "Saved on this device.";
+}
+
+function renderActivityLinkFeedback(key) {
+  const linkData = state.activityLinks[key];
+  const activityLink = linkData && linkData.url ? normalizeExternalUrl(linkData.url) : "";
+  document.querySelectorAll("[data-activity-status]").forEach((element) => {
+    if (element.dataset.activityStatus === key) {
+      element.textContent = getActivityLinkStatusText(Boolean(activityLink));
+    }
+  });
+  document.querySelectorAll("[data-activity-open]").forEach((element) => {
+    if (element.dataset.activityOpen === key) {
+      element.innerHTML = activityLink
+        ? `<a class="activity-open-link" href="${escapeHtml(activityLink)}" target="_blank" rel="noopener noreferrer">Open saved activity</a>`
+        : "";
+    }
+  });
 }
 
 function getRideStartTimeForIcs(slot) {
@@ -1409,13 +1432,16 @@ function renderSelectedRoute() {
         </div>
         <label>
           <span>Shared Strava activity</span>
-          <input type="url" data-activity-link="${escapeHtml(completionKey)}" value="${escapeHtml(activityLink)}" placeholder="https://www.strava.com/activities/..." />
+          <input type="text" inputmode="url" data-activity-link="${escapeHtml(completionKey)}" value="${escapeHtml(activityLink)}" placeholder="https://www.strava.com/activities/..." />
         </label>
-        ${
-          activityLink
-            ? `<a class="activity-open-link" href="${escapeHtml(activityLink)}" target="_blank" rel="noopener noreferrer">Open saved activity</a>`
-            : ""
-        }
+        <p class="activity-save-note" data-activity-status="${escapeHtml(completionKey)}" aria-live="polite">${getActivityLinkStatusText(Boolean(activityLink))}</p>
+        <div data-activity-open="${escapeHtml(completionKey)}">
+          ${
+            activityLink
+              ? `<a class="activity-open-link" href="${escapeHtml(activityLink)}" target="_blank" rel="noopener noreferrer">Open saved activity</a>`
+              : ""
+          }
+        </div>
       </div>
       <div class="action-grid">
         <a class="inline-action action-whatsapp" href="${getWhatsAppUrl(route)}" target="_blank" rel="noopener noreferrer">

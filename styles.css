@@ -1084,6 +1084,14 @@ h3 {
   text-decoration: none;
 }
 
+.activity-save-note {
+  margin: -2px 0 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
 .activity-open-link:hover {
   text-decoration: underline;
 }

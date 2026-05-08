@@ -31,6 +31,7 @@ Primary sources include Minneapolis Park and Recreation Board, Three Rivers Park
 - Per-ride RSVP chips for quick local planning.
 - Default 6:30 AM meet time with per-ride meet-time, meet-spot, and note overrides in the route panel.
 - Manual Strava activity links for post-ride logging.
+- Saved Strava activity links show immediate save feedback and an open link.
 - Refreshable upcoming route picks, while completed rides and the Grand Rounds finale stay locked.
 - Strava app handoff for starting a recording, plus an optional separate club link.
 - Shared crew sync link for names, settings, RSVPs, completed rides, route queue, ride overrides, custom routes, and saved activity links.
