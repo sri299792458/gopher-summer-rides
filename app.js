@@ -2,6 +2,10 @@
 const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const { routes, schedulePlan, sources } = window.RIDE_DATA;
 const routeById = new Map(routes.map((route) => [route.id, route]));
+const initialSearchParams = new URLSearchParams(window.location.search);
+const syncApiBase = "https://mantledb.sh/v2";
+const syncPath = "crew-plan";
+const syncPollMs = 8000;
 let scheduleSlots = [];
 let schedule = [];
 let lastScheduledWeek;
@@ -34,12 +38,21 @@ function safeNumberStorage(key, fallback) {
   return Number.isFinite(value) ? value : fallback;
 }
 
+function getOrCreateClientId() {
+  const existing = localStorage.getItem("crewSyncClientId");
+  if (existing) return existing;
+  const next = crypto.randomUUID ? crypto.randomUUID() : `client-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  localStorage.setItem("crewSyncClientId", next);
+  return next;
+}
+
 const defaultRiders = ["Sri", "Apurv", "Ayaan"];
 const defaultPreferences = {
   weeknightTime: "06:30",
   saturdayTime: "06:30",
   meetSpot: "UMN East Bank",
   stravaClub: "",
+  photosAlbum: "https://photos.app.goo.gl/wYKviEyYacmUMBcR9",
 };
 
 const state = {
@@ -53,6 +66,17 @@ const state = {
   planAssignments: safeObjectStorage("planAssignments", {}),
   planSeed: safeNumberStorage("planSeed", 0),
   rideOverrides: safeObjectStorage("rideOverrides", {}),
+};
+
+const syncState = {
+  id: initialSearchParams.get("sync") || localStorage.getItem("crewSyncBlobId") || "",
+  clientId: getOrCreateClientId(),
+  lastRemoteUpdatedAt: safeNumberStorage("crewSyncLastUpdatedAt", 0),
+  saveTimer: null,
+  pollTimer: null,
+  applyingRemote: false,
+  busy: false,
+  ready: false,
 };
 
 const dateInput = document.querySelector("#dateInput");
@@ -81,7 +105,13 @@ const preferenceInputs = {
   saturdayTime: document.querySelector("#saturdayTime"),
   meetSpot: document.querySelector("#meetSpot"),
   stravaClub: document.querySelector("#stravaClub"),
+  photosAlbum: document.querySelector("#photosAlbum"),
 };
+const syncStatus = document.querySelector("#syncStatus");
+const startSyncButton = document.querySelector("#startSyncButton");
+const copySyncLinkButton = document.querySelector("#copySyncLinkButton");
+const whatsAppSyncLink = document.querySelector("#whatsAppSyncLink");
+const pullSyncButton = document.querySelector("#pullSyncButton");
 const toast = document.querySelector("#toast");
 
 const weekThemes = {
@@ -353,9 +383,206 @@ function rideKey(slot) {
 }
 
 function routeIdFromRideKey(key) {
+  if (key.startsWith("route:")) return key.slice(6);
   const dateKeyMatch = key.match(/^\d{4}-\d{2}-\d{2}-(.+)$/);
   if (dateKeyMatch) return dateKeyMatch[1];
   return key.split("-").slice(2).join("-");
+}
+
+function setSyncId(id) {
+  syncState.id = id || "";
+  if (syncState.id) {
+    localStorage.setItem("crewSyncBlobId", syncState.id);
+  } else {
+    localStorage.removeItem("crewSyncBlobId");
+  }
+}
+
+function getSyncEndpoint(id = syncState.id) {
+  return `${syncApiBase}/${encodeURIComponent(id)}/${syncPath}`;
+}
+
+function getSyncLink() {
+  const url = new URL(window.location.href);
+  url.search = "";
+  url.searchParams.set("sync", syncState.id);
+  url.searchParams.set("tab", "crew");
+  return url.toString();
+}
+
+function getWhatsAppSyncUrl() {
+  const text = `Gopher Summer Rides crew plan for Sri, Apurv, and Ayaan: ${getSyncLink()}`;
+  return `https://wa.me/?text=${encodeURIComponent(text)}`;
+}
+
+function updateSyncControls(message, tone = "idle") {
+  if (!syncStatus) return;
+  const isConnected = Boolean(syncState.id);
+  syncStatus.textContent = message || (isConnected ? "Crew sync connected" : "Local only");
+  syncStatus.dataset.tone = tone;
+  if (startSyncButton) {
+    startSyncButton.disabled = isConnected || syncState.busy;
+    startSyncButton.innerHTML = `<i data-lucide="${isConnected ? "cloud-check" : "cloud"}"></i>${isConnected ? "Sync on" : "Start sync"}`;
+  }
+  if (copySyncLinkButton) copySyncLinkButton.disabled = !isConnected;
+  if (pullSyncButton) pullSyncButton.disabled = !isConnected || syncState.busy;
+  if (whatsAppSyncLink) {
+    whatsAppSyncLink.href = isConnected ? getWhatsAppSyncUrl() : "#";
+    whatsAppSyncLink.classList.toggle("is-disabled", !isConnected);
+    whatsAppSyncLink.setAttribute("aria-disabled", String(!isConnected));
+  }
+  renderIcons();
+}
+
+function getCrewPlanSnapshot() {
+  return {
+    app: "gopher-summer-rides",
+    version: 1,
+    updatedAt: Date.now(),
+    updatedBy: syncState.clientId,
+    riders: state.riders.slice(0, 3),
+    preferences: { ...state.preferences },
+    completed: [...state.completed],
+    rsvps: { ...state.rsvps },
+    planAssignments: { ...state.planAssignments },
+    planSeed: state.planSeed,
+    rideOverrides: { ...state.rideOverrides },
+  };
+}
+
+function persistLocalCrewState() {
+  localStorage.setItem("completedRides", JSON.stringify([...state.completed]));
+  localStorage.setItem("riders", JSON.stringify(state.riders));
+  localStorage.setItem("ridePreferences", JSON.stringify(state.preferences));
+  localStorage.setItem("rideRsvps", JSON.stringify(state.rsvps));
+  localStorage.setItem("planAssignments", JSON.stringify(state.planAssignments));
+  localStorage.setItem("planSeed", String(state.planSeed));
+  localStorage.setItem("rideOverrides", JSON.stringify(state.rideOverrides));
+}
+
+function renderCrewControls() {
+  riderInputs.forEach((input, index) => {
+    input.value = state.riders[index] || defaultRiders[index];
+  });
+  Object.entries(preferenceInputs).forEach(([key, input]) => {
+    input.value = state.preferences[key] || "";
+  });
+}
+
+function applyCrewPlanSnapshot(snapshot) {
+  if (!snapshot || snapshot.app !== "gopher-summer-rides") throw new Error("This sync link does not contain a Gopher Summer Rides crew plan.");
+  syncState.applyingRemote = true;
+  try {
+    state.riders = Array.isArray(snapshot.riders) ? snapshot.riders.slice(0, 3) : defaultRiders;
+    state.preferences = { ...defaultPreferences, ...(snapshot.preferences && typeof snapshot.preferences === "object" ? snapshot.preferences : {}) };
+    state.completed = new Set(Array.isArray(snapshot.completed) ? snapshot.completed : []);
+    state.rsvps = snapshot.rsvps && typeof snapshot.rsvps === "object" ? snapshot.rsvps : {};
+    state.planAssignments = snapshot.planAssignments && typeof snapshot.planAssignments === "object" ? snapshot.planAssignments : {};
+    state.planSeed = Number.isFinite(Number(snapshot.planSeed)) ? Number(snapshot.planSeed) : 0;
+    state.rideOverrides = snapshot.rideOverrides && typeof snapshot.rideOverrides === "object" ? snapshot.rideOverrides : {};
+    persistLocalCrewState();
+    refreshSchedule({ preserve: true });
+    renderCrewControls();
+    renderAll();
+  } finally {
+    syncState.applyingRemote = false;
+  }
+}
+
+async function fetchCrewPlan() {
+  const response = await fetch(getSyncEndpoint(), {
+    headers: { Accept: "application/json" },
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error(`Sync pull failed (${response.status})`);
+  return response.json();
+}
+
+async function pullCrewSync({ quiet = false } = {}) {
+  if (!syncState.id) return;
+  if (!quiet) updateSyncControls("Pulling latest...", "busy");
+  const remote = await fetchCrewPlan();
+  const remoteUpdatedAt = Number(remote.updatedAt) || 0;
+  if (remoteUpdatedAt > syncState.lastRemoteUpdatedAt) {
+    applyCrewPlanSnapshot(remote);
+    syncState.lastRemoteUpdatedAt = remoteUpdatedAt;
+    localStorage.setItem("crewSyncLastUpdatedAt", String(syncState.lastRemoteUpdatedAt));
+    updateSyncControls("Crew sync updated", "ok");
+    showToast("Crew plan updated.");
+  } else if (!quiet) {
+    updateSyncControls("Already up to date", "ok");
+  }
+}
+
+async function pushCrewSyncNow() {
+  if (!syncState.id || syncState.applyingRemote || !syncState.ready) return;
+  window.clearTimeout(syncState.saveTimer);
+  const snapshot = getCrewPlanSnapshot();
+  updateSyncControls("Syncing changes...", "busy");
+  const response = await fetch(getSyncEndpoint(), {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify(snapshot),
+  });
+  if (!response.ok) throw new Error(`Sync push failed (${response.status})`);
+  syncState.lastRemoteUpdatedAt = snapshot.updatedAt;
+  localStorage.setItem("crewSyncLastUpdatedAt", String(syncState.lastRemoteUpdatedAt));
+  updateSyncControls("Synced just now", "ok");
+}
+
+function queueSyncPush() {
+  if (!syncState.id || syncState.applyingRemote || !syncState.ready) return;
+  window.clearTimeout(syncState.saveTimer);
+  syncState.saveTimer = window.setTimeout(() => {
+    pushCrewSyncNow().catch((error) => {
+      updateSyncControls("Sync failed. Pull or retry.", "error");
+      console.error(error);
+    });
+  }, 650);
+}
+
+function startSyncPolling() {
+  if (!syncState.id) return;
+  syncState.ready = true;
+  window.clearInterval(syncState.pollTimer);
+  updateSyncControls("Crew sync connected", "ok");
+  pullCrewSync({ quiet: true }).catch((error) => {
+    updateSyncControls("Could not pull sync yet", "error");
+    console.error(error);
+  });
+  syncState.pollTimer = window.setInterval(() => {
+    pullCrewSync({ quiet: true }).catch((error) => {
+      updateSyncControls("Sync check failed", "error");
+      console.error(error);
+    });
+  }, syncPollMs);
+}
+
+async function createCrewSync() {
+  syncState.busy = true;
+  updateSyncControls("Creating crew sync...", "busy");
+  const snapshot = getCrewPlanSnapshot();
+  const id = `gopher-rides-${crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`}`;
+  const response = await fetch(getSyncEndpoint(id), {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify(snapshot),
+  });
+  if (!response.ok) throw new Error(`Sync create failed (${response.status})`);
+  setSyncId(id);
+  syncState.lastRemoteUpdatedAt = snapshot.updatedAt;
+  localStorage.setItem("crewSyncLastUpdatedAt", String(syncState.lastRemoteUpdatedAt));
+  syncState.ready = true;
+  syncState.busy = false;
+  updateUrlState();
+  startSyncPolling();
+  showToast("Crew sync created.");
+}
+
+async function copyCrewSyncLink() {
+  if (!syncState.id) return;
+  await navigator.clipboard.writeText(getSyncLink());
+  showToast("Crew sync link copied.");
 }
 
 function getCompletedRouteIds() {
@@ -384,27 +611,33 @@ function refreshUpcomingPlan() {
 
 function saveCompleted() {
   localStorage.setItem("completedRides", JSON.stringify([...state.completed]));
+  queueSyncPush();
 }
 
 function saveRiders() {
   localStorage.setItem("riders", JSON.stringify(state.riders));
+  queueSyncPush();
 }
 
 function savePreferences() {
   localStorage.setItem("ridePreferences", JSON.stringify(state.preferences));
+  queueSyncPush();
 }
 
 function saveRsvps() {
   localStorage.setItem("rideRsvps", JSON.stringify(state.rsvps));
+  queueSyncPush();
 }
 
 function savePlanState() {
   localStorage.setItem("planAssignments", JSON.stringify(state.planAssignments));
   localStorage.setItem("planSeed", String(state.planSeed));
+  queueSyncPush();
 }
 
 function saveRideOverrides() {
   localStorage.setItem("rideOverrides", JSON.stringify(state.rideOverrides));
+  queueSyncPush();
 }
 
 function getInitialParams() {
@@ -415,11 +648,13 @@ function getInitialParams() {
     vibe: params.get("vibe"),
     energy: params.get("energy"),
     date: params.get("date"),
+    sync: params.get("sync"),
   };
 }
 
 function updateUrlState() {
   const params = new URLSearchParams();
+  if (syncState.id) params.set("sync", syncState.id);
   if (state.selectedRouteId !== "stone-arch-boom") params.set("route", state.selectedRouteId);
   if (state.activeTab !== "schedule") params.set("tab", state.activeTab);
   if (state.activeVibe !== "all") params.set("vibe", state.activeVibe);
@@ -432,6 +667,7 @@ function updateUrlState() {
 function buildRouteUrl(routeId) {
   const url = new URL(window.location.href);
   url.search = "";
+  if (syncState.id) url.searchParams.set("sync", syncState.id);
   url.searchParams.set("route", routeId);
   url.searchParams.set("tab", "routes");
   return url.toString();
@@ -578,6 +814,7 @@ function buildWhatsAppText(route) {
     `RSVP: ${getRsvpSummary(route)}`,
   ];
   if (note) lines.push(`Plan note: ${note}`);
+  if (getPhotosAlbumUrl()) lines.push(`Photos: ${getPhotosAlbumUrl()}`);
   lines.push(`Track on Strava after the ride. Plan: ${buildRouteUrl(route.id)}`);
   return lines.join("\n");
 }
@@ -592,6 +829,10 @@ function getStravaClubUrl() {
 
 function getStravaFallbackUrl() {
   return getStravaClubUrl() || "https://www.strava.com/mobile";
+}
+
+function getPhotosAlbumUrl() {
+  return state.preferences.photosAlbum?.startsWith("http") ? state.preferences.photosAlbum : "";
 }
 
 function getStravaLaunchUrl() {
@@ -911,6 +1152,14 @@ function renderSelectedRoute() {
           Map search
         </a>
         ${
+          getPhotosAlbumUrl()
+            ? `<a class="inline-action action-photos" href="${escapeHtml(getPhotosAlbumUrl())}" target="_blank" rel="noopener noreferrer">
+                <i data-lucide="images"></i>
+                Photos
+              </a>`
+            : ""
+        }
+        ${
           getStravaClubUrl()
             ? `<a class="inline-action action-strava-club" href="${escapeHtml(getStravaClubUrl())}" target="_blank" rel="noopener noreferrer">
                 <i data-lucide="users"></i>
@@ -1039,6 +1288,12 @@ function initEvents() {
     const vibeButton = event.target.closest("[data-vibe]");
     const rsvpButton = event.target.closest("[data-rsvp-key]");
     const stravaButton = event.target.closest("[data-strava-launch]");
+    const disabledLink = event.target.closest("a.is-disabled");
+
+    if (disabledLink) {
+      event.preventDefault();
+      return;
+    }
 
     if (stravaButton) {
       openStravaApp(event);
@@ -1120,6 +1375,26 @@ function initEvents() {
 
   document.querySelector("#downloadCalendarButton").addEventListener("click", downloadCalendar);
   document.querySelector("#refreshPlanButton").addEventListener("click", refreshUpcomingPlan);
+  startSyncButton.addEventListener("click", () => {
+    createCrewSync().catch((error) => {
+      syncState.busy = false;
+      updateSyncControls("Could not start sync", "error");
+      console.error(error);
+      showToast("Crew sync failed.");
+    });
+  });
+  copySyncLinkButton.addEventListener("click", () => {
+    copyCrewSyncLink().catch((error) => {
+      updateSyncControls("Copy failed", "error");
+      console.error(error);
+    });
+  });
+  pullSyncButton.addEventListener("click", () => {
+    pullCrewSync({ quiet: false }).catch((error) => {
+      updateSyncControls("Pull failed", "error");
+      console.error(error);
+    });
+  });
 
   document.querySelector("#randomRideButton").addEventListener("click", () => {
     const pool = energyFilter.value === "all" ? routes : routes.filter((route) => route.energy === energyFilter.value);
@@ -1153,10 +1428,11 @@ function initEvents() {
 }
 
 function boot() {
+  const params = getInitialParams();
+  if (params.sync) setSyncId(params.sync);
   refreshSchedule({ preserve: true });
   dateInput.min = formatDateValue(summerStart);
   dateInput.max = formatDateValue(summerEnd);
-  const params = getInitialParams();
   const today = clampDate(new Date());
   dateInput.value = params.date || formatDateValue(today);
   if (!dateInput.validity.valid) dateInput.value = formatDateValue(today);
@@ -1173,8 +1449,10 @@ function boot() {
     if (state.preferences.saturdayTime === "10:00") state.preferences.saturdayTime = defaultPreferences.saturdayTime;
     savePreferences();
   }
+  renderCrewControls();
   initMap();
   initEvents();
+  updateSyncControls();
   renderAll();
   setActiveTab(state.activeTab);
   document.querySelectorAll(".filter-chip").forEach((button) => {
@@ -1182,6 +1460,7 @@ function boot() {
     button.classList.toggle("is-active", isActive);
     button.setAttribute("aria-pressed", String(isActive));
   });
+  if (syncState.id) startSyncPolling();
 }
 
 boot();

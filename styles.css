@@ -416,6 +416,12 @@ h3 {
   flex-wrap: wrap;
 }
 
+.text-button:disabled,
+.text-button.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .schedule-list,
 .route-list {
   display: grid;
@@ -527,6 +533,42 @@ h3 {
 
 .custom-grid {
   grid-template-columns: 1fr 1fr;
+}
+
+.sync-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 0;
+  padding: 12px;
+  border: 1px solid rgba(47, 128, 160, 0.24);
+  border-radius: var(--radius);
+  background: #f3fafc;
+}
+
+.sync-card h3,
+.sync-card p {
+  margin: 0;
+}
+
+.sync-card p {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 760;
+}
+
+#syncStatus[data-tone="ok"] {
+  color: var(--green);
+}
+
+#syncStatus[data-tone="busy"] {
+  color: var(--river);
+}
+
+#syncStatus[data-tone="error"] {
+  color: var(--maroon);
 }
 
 .status-board {
@@ -714,6 +756,12 @@ h3 {
   border-color: rgba(122, 31, 43, 0.35);
   background: #fff6f7;
   color: var(--maroon);
+}
+
+.action-photos {
+  border-color: rgba(47, 128, 160, 0.35);
+  background: #eef7fb;
+  color: var(--river);
 }
 
 .ride-ops {
@@ -907,6 +955,7 @@ h3 {
   .status-board,
   .action-grid,
   .custom-grid,
+  .sync-card,
   .ride-ops,
   .ride-customizer {
     grid-template-columns: 1fr;

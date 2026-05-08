@@ -141,6 +141,34 @@
                 <span>Strava club</span>
                 <input id="stravaClub" type="url" placeholder="https://www.strava.com/clubs/..." />
               </label>
+              <label class="crew-member">
+                <span>Google Photos</span>
+                <input id="photosAlbum" type="url" value="https://photos.app.goo.gl/wYKviEyYacmUMBcR9" />
+              </label>
+            </div>
+            <div class="sync-card">
+              <div>
+                <h3>Crew sync</h3>
+                <p id="syncStatus">Local only</p>
+              </div>
+              <div class="button-row">
+                <button class="text-button" id="startSyncButton" type="button">
+                  <i data-lucide="cloud"></i>
+                  Start sync
+                </button>
+                <button class="text-button" id="copySyncLinkButton" type="button" disabled>
+                  <i data-lucide="link"></i>
+                  Copy link
+                </button>
+                <a class="text-button is-disabled" id="whatsAppSyncLink" href="#" target="_blank" rel="noopener noreferrer" aria-disabled="true">
+                  <i data-lucide="message-circle"></i>
+                  WhatsApp
+                </a>
+                <button class="text-button" id="pullSyncButton" type="button" disabled>
+                  <i data-lucide="refresh-cw"></i>
+                  Pull
+                </button>
+              </div>
             </div>
             <div class="status-board">
               <div>

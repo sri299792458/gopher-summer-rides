@@ -79,3 +79,5 @@ Route geometry is approximate waypoint geometry for planning and visualization, 
 - Clarified product truth: public code updates propagate after deployment, but rider names, RSVPs, completed rides, and route refreshes are still per-browser until a shared-state backend is added.
 - Set default meet time to 6:30 AM and added per-ride overrides for meet time, meet spot, and planning note.
 - Replaced the Strava upload/login link with a best-effort mobile app launch (`strava://record` or Android intent) and a non-login fallback to Strava mobile or the configured club URL.
+- Added Crew Sync via MantleDB so one sync link can share rider names, meet settings, RSVPs, completed rides, adaptive route order, and per-ride overrides across devices.
+- Added the user-provided Google Photos album as the default photo handoff: https://photos.app.goo.gl/wYKviEyYacmUMBcR9

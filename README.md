@@ -28,6 +28,8 @@ Primary sources include Minneapolis Park and Recreation Board, Three Rivers Park
 - Default 6:30 AM meet time with per-ride meet-time, meet-spot, and note overrides.
 - Refreshable upcoming route picks, while completed rides and the Grand Rounds finale stay locked.
 - Strava app handoff for starting a recording, with a mobile/web fallback and optional club link.
+- Shared crew sync link for names, settings, RSVPs, completed rides, route queue, and ride overrides.
+- Default Google Photos album link for ride photos.
 - `.ics` calendar export for the full summer plan.
 - Official status/source links and route caveats.
 
@@ -79,4 +81,4 @@ http://YOUR-IP:4173/
 
 `127.0.0.1` only works on your own computer. `0.0.0.0` starts the server, but it is not the link to share.
 
-Names, RSVPs, completed rides, and refreshed route order are currently stored per browser. Code changes to the public site reach everyone after deployment, but live shared crew state would need a small backend or shared cloud document.
+Without Crew Sync, names, RSVPs, completed rides, and refreshed route order are stored per browser. With Crew Sync enabled, the app stores shared crew state in a small MantleDB JSON document; anyone with the sync link can read and update it. Do not put secrets there.
