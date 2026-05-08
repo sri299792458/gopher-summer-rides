@@ -39,6 +39,7 @@ Primary sources include Minneapolis Park and Recreation Board, Three Rivers Park
 - Crew ride log shows completed rides and saved Strava links in one place.
 - Refreshable upcoming route picks, while completed rides and the Grand Rounds finale stay locked.
 - A next-open-ride swap action changes one editable upcoming ride without reshuffling the whole summer.
+- Crew-picked next rides can be unpinned so they become refreshable again.
 - Strava app handoff for starting a recording, plus an optional separate club link.
 - Shared crew sync link for names, settings, RSVPs, completed rides, route queue, ride overrides, custom routes, and saved activity links.
 - Crew Sync shows autosave, last-sync, and auto-check status so shared edits feel traceable.

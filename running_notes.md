@@ -144,3 +144,9 @@ Route geometry is approximate waypoint geometry for planning and visualization, 
 - Added a shared "Swap" action to the next-ride strip when the next unfinished ride is editable.
 - The swap trades the next open ride with a later unpinned route that matches the energy filter, pins the new pick as a crew choice, and syncs it without reshuffling the whole summer queue.
 - Kept fixed kickoff/finale rides locked, and kept the action out of the strip when the visible next ride is not editable.
+
+## Next ride unpin
+
+- Added an "Unpin" action for crew-picked next rides so a route can become refreshable again without clearing the rest of the plan.
+- The action only appears on editable pinned next rides and preserves locked kickoff/finale rides.
+- Bumped the static asset version for the deployed bundle.

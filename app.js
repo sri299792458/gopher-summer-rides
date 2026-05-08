@@ -1075,6 +1075,23 @@ function swapNextOpenRide() {
   showToast(`${picked.route.name} is now the next open ride.`);
 }
 
+function unpinNextOpenRide() {
+  const slot = getNextEditableScheduleSlot();
+  if (!slot) {
+    showToast("No editable ride left to unpin.");
+    return;
+  }
+  if (!state.planPins[slot.id]) {
+    showToast("Next ride is already refreshable.");
+    return;
+  }
+
+  delete state.planPins[slot.id];
+  savePlanState();
+  renderAll();
+  showToast("Next ride can refresh again.");
+}
+
 function planRouteForNextRide(routeId) {
   const route = routeById.get(routeId);
   if (!route) return;
@@ -1492,6 +1509,7 @@ function renderNextRideStrip() {
   const { slot, route } = nextRide;
   const routeMapAction = getRouteMapAction(route);
   const canSwapRide = !slot.fixedRouteId && !isRideDone(slot);
+  const canUnpinRide = canSwapRide && Boolean(state.planPins[slot.id]);
   nextRideStrip.classList.remove("is-empty");
   nextRideStrip.innerHTML = `
     <div class="next-ride-main">
@@ -1520,6 +1538,14 @@ function renderNextRideStrip() {
           ? `<button class="mini-action" type="button" data-swap-next-ride aria-label="Swap ${escapeHtml(route.name)} with another upcoming ride">
               <i data-lucide="shuffle"></i>
               <span>Swap</span>
+            </button>`
+          : ""
+      }
+      ${
+        canUnpinRide
+          ? `<button class="mini-action" type="button" data-unpin-next-ride aria-label="Let ${escapeHtml(route.name)} refresh again">
+              <i data-lucide="unlock"></i>
+              <span>Unpin</span>
             </button>`
           : ""
       }
@@ -2041,6 +2067,7 @@ function initEvents() {
     const deleteCustomButton = event.target.closest("[data-delete-custom-route]");
     const planNextButton = event.target.closest("[data-plan-next-route]");
     const swapNextButton = event.target.closest("[data-swap-next-ride]");
+    const unpinNextButton = event.target.closest("[data-unpin-next-ride]");
     const disabledLink = event.target.closest("a.is-disabled");
 
     if (disabledLink) {
@@ -2079,6 +2106,11 @@ function initEvents() {
 
     if (swapNextButton) {
       swapNextOpenRide();
+      return;
+    }
+
+    if (unpinNextButton) {
+      unpinNextOpenRide();
       return;
     }
 

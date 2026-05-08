@@ -69,6 +69,7 @@ check(versions.size === 1, `local assets share one version (${[...versions].join
   "requestCrewSyncPull",
   "pullCrewSyncOnResume",
   "swapNextOpenRide",
+  "unpinNextOpenRide",
   "getBackupCandidatesForSlot",
   "planRouteForNextRide",
   "getSyncDetailText",
@@ -81,6 +82,7 @@ check(app.includes("syncPollMs = 8000"), "app keeps an automatic sync check cade
 check(app.includes('document.addEventListener("visibilitychange", pullCrewSyncOnResume)'), "app refreshes crew sync after tab resume");
 check(app.includes('window.addEventListener("online", pullCrewSyncOnResume)'), "app refreshes crew sync after reconnecting");
 check(app.includes("data-swap-next-ride"), "app exposes a next-open-ride swap action");
+check(app.includes("data-unpin-next-ride"), "app exposes a next-open-ride unpin action");
 check(!app.includes("?.") && !app.includes("??"), "app avoids optional chaining/nullish coalescing for older mobile browsers");
 
 const sandbox = { window: {}, console };
