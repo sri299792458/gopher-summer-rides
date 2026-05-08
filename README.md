@@ -27,6 +27,7 @@ Primary sources include Minneapolis Park and Recreation Board, Three Rivers Park
 - Crew-added custom routes shared through Crew Sync.
 - Exact custom route/map links become the shared map button for the crew.
 - Route ideas can auto-estimate ride time when only distance is entered.
+- Custom route ideas can be planned into the next open ride and preserved as crew picks.
 - Custom rider names, optional Strava club and Photos links, and per-ride meet setup.
 - Per-ride RSVP chips for quick local planning.
 - Default 6:30 AM meet time with per-ride meet-time, meet-spot, and note overrides in the route panel.

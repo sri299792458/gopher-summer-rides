@@ -596,6 +596,7 @@ h3 {
 
 .badge-custom,
 .badge-map,
+.badge-picked,
 .badge-selected,
 .custom-route-tag {
   border-color: rgba(39, 122, 99, 0.28);
@@ -613,6 +614,13 @@ h3 {
   border: 1px solid rgba(122, 31, 43, 0.28);
   background: #fff6f7;
   color: var(--maroon);
+}
+
+.badge-picked,
+.picked-pill {
+  border: 1px solid rgba(200, 107, 40, 0.28);
+  background: #fff4eb;
+  color: #a34d16;
 }
 
 .custom-route-tag {
@@ -761,6 +769,8 @@ h3 {
 .inline-action {
   min-height: 42px;
   width: 100%;
+  cursor: pointer;
+  font: inherit;
   text-decoration: none;
 }
 
@@ -974,6 +984,12 @@ h3 {
   border-color: rgba(39, 122, 99, 0.42);
   background: #eff6f3;
   color: var(--green);
+}
+
+.action-plan {
+  border-color: rgba(200, 107, 40, 0.42);
+  background: #fff4eb;
+  color: #a34d16;
 }
 
 .action-strava-club {

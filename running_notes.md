@@ -120,3 +120,4 @@ Route geometry is approximate waypoint geometry for planning and visualization, 
 - Continued with another narrow pass: route library cards now show a selected badge, and small RSVP/filter/done controls have larger tap targets without changing page structure.
 - Continued route idea flow: minutes are optional and auto-estimated from miles/energy, the form uses "route idea" language, and route cards show when a custom idea has a map link.
 - Continued post-ride logging polish: Strava activity URLs now show immediate saved feedback and expose the saved activity link without waiting for another render.
+- Started the long-running product goal: custom route ideas can now be deliberately planned into the next unfinished flexible ride, marked as crew picks, preserved through refreshes, and shared through Crew Sync.

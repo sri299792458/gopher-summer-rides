@@ -114,6 +114,7 @@ const state = {
   preferences: { ...defaultPreferences, ...safeObjectStorage("ridePreferences", {}) },
   rsvps: safeObjectStorage("rideRsvps", {}),
   planAssignments: safeObjectStorage("planAssignments", {}),
+  planPins: safeObjectStorage("planPins", {}),
   planSeed: safeNumberStorage("planSeed", 0),
   rideOverrides: safeObjectStorage("rideOverrides", {}),
   customRoutes: safeArrayStorage("customRoutes", []),
@@ -232,11 +233,11 @@ function hashString(value) {
   return hash >>> 0;
 }
 
-function validateScheduledRouteIds(knownRouteIds, slots) {
+function validateScheduledRouteIds(knownRouteIds, slots, requireEveryKnownRoute = true) {
   const scheduledIds = slots.map((slot) => slot.routeId).filter(Boolean);
   const missingIds = scheduledIds.filter((routeId) => !knownRouteIds.has(routeId));
   const duplicateIds = scheduledIds.filter((routeId, index) => scheduledIds.indexOf(routeId) !== index);
-  const unscheduledIds = [...knownRouteIds].filter((routeId) => !scheduledIds.includes(routeId));
+  const unscheduledIds = requireEveryKnownRoute ? [...knownRouteIds].filter((routeId) => !scheduledIds.includes(routeId)) : [];
 
   if (missingIds.length || duplicateIds.length || unscheduledIds.length) {
     throw new Error(
@@ -417,7 +418,7 @@ function pickAdaptiveRoute(pool, slot, slotIndex, totalSlots, previousRoute, see
 }
 
 function normalizePlanAssignments({ preserve = true } = {}) {
-  const knownRouteIds = new Set(baseRoutes.map((route) => route.id));
+  const knownRouteIds = new Set(routes.map((route) => route.id));
   const fixedRouteIds = new Set(scheduleSlots.filter((slot) => slot.fixedRouteId).map((slot) => slot.fixedRouteId));
   const nextAssignments = {};
   const usedRouteIds = new Set(fixedRouteIds);
@@ -451,6 +452,11 @@ function normalizePlanAssignments({ preserve = true } = {}) {
     pool = pool.filter((routeId) => routeId !== pickedRouteId);
   }
 
+  Object.keys(state.planPins).forEach((slotId) => {
+    if (!nextAssignments[slotId] || fixedRouteIds.has(nextAssignments[slotId])) {
+      delete state.planPins[slotId];
+    }
+  });
   state.planAssignments = nextAssignments;
   savePlanState();
 }
@@ -460,7 +466,11 @@ function buildScheduleFromAssignments() {
     ...slot,
     routeId: slot.fixedRouteId || state.planAssignments[slot.id],
   }));
-  validateScheduledRouteIds(new Set(baseRoutes.map((route) => route.id)), slots);
+  const hasCrewPickedCustomRoute = slots.some((slot) => {
+    const route = routeById.get(slot.routeId);
+    return route && route.custom;
+  });
+  validateScheduledRouteIds(new Set(routes.map((route) => route.id)), slots, !hasCrewPickedCustomRoute);
   return groupScheduleSlots(slots, schedulePlan.weekSize || 3);
 }
 
@@ -557,6 +567,7 @@ function getCrewPlanSnapshot() {
     completed: [...state.completed],
     rsvps: { ...state.rsvps },
     planAssignments: { ...state.planAssignments },
+    planPins: { ...state.planPins },
     planSeed: state.planSeed,
     rideOverrides: { ...state.rideOverrides },
     customRoutes: state.customRoutes.slice(),
@@ -570,6 +581,7 @@ function persistLocalCrewState() {
   writeLocalValue("ridePreferences", JSON.stringify(state.preferences));
   writeLocalValue("rideRsvps", JSON.stringify(state.rsvps));
   writeLocalValue("planAssignments", JSON.stringify(state.planAssignments));
+  writeLocalValue("planPins", JSON.stringify(state.planPins));
   writeLocalValue("planSeed", String(state.planSeed));
   writeLocalValue("rideOverrides", JSON.stringify(state.rideOverrides));
   writeLocalValue("customRoutes", JSON.stringify(state.customRoutes));
@@ -594,6 +606,7 @@ function applyCrewPlanSnapshot(snapshot) {
     state.completed = new Set(Array.isArray(snapshot.completed) ? snapshot.completed : []);
     state.rsvps = snapshot.rsvps && typeof snapshot.rsvps === "object" ? snapshot.rsvps : {};
     state.planAssignments = snapshot.planAssignments && typeof snapshot.planAssignments === "object" ? snapshot.planAssignments : {};
+    state.planPins = snapshot.planPins && typeof snapshot.planPins === "object" ? snapshot.planPins : {};
     state.planSeed = Number.isFinite(Number(snapshot.planSeed)) ? Number(snapshot.planSeed) : 0;
     state.rideOverrides = snapshot.rideOverrides && typeof snapshot.rideOverrides === "object" ? snapshot.rideOverrides : {};
     state.customRoutes = Array.isArray(snapshot.customRoutes) ? snapshot.customRoutes.map(normalizeCustomRoute) : [];
@@ -740,6 +753,7 @@ function refreshUpcomingPlan() {
 
   for (const slot of scheduleSlots) {
     if (slot.fixedRouteId || parseDateValue(slot.date) < cutoff) continue;
+    if (state.planPins[slot.id]) continue;
     const routeId = state.planAssignments[slot.id];
     if (routeId && !completedRouteIds.has(routeId)) delete state.planAssignments[slot.id];
   }
@@ -772,6 +786,7 @@ function saveRsvps() {
 
 function savePlanState() {
   writeLocalValue("planAssignments", JSON.stringify(state.planAssignments));
+  writeLocalValue("planPins", JSON.stringify(state.planPins));
   writeLocalValue("planSeed", String(state.planSeed));
   queueSyncPush();
 }
@@ -829,6 +844,12 @@ function deleteCustomRoute(routeId) {
     : "Remove this custom route?";
   if (!window.confirm(message)) return;
   state.customRoutes = state.customRoutes.filter((customRoute) => customRoute.id !== routeId);
+  Object.keys(state.planAssignments).forEach((slotId) => {
+    if (state.planAssignments[slotId] === routeId) {
+      delete state.planAssignments[slotId];
+      delete state.planPins[slotId];
+    }
+  });
   Object.keys(state.activityLinks).forEach((key) => {
     if (routeIdFromRideKey(key) === routeId) delete state.activityLinks[key];
   });
@@ -836,8 +857,10 @@ function deleteCustomRoute(routeId) {
     if (routeIdFromRideKey(key) === routeId) state.completed.delete(key);
   });
   rebuildRouteLibrary();
+  refreshSchedule({ preserve: true });
   if (state.selectedRouteId === routeId) state.selectedRouteId = "stone-arch-boom";
   saveCustomRoutes();
+  savePlanState();
   saveActivityLinks();
   saveCompleted();
   renderAll();
@@ -903,6 +926,47 @@ function getSelectedScheduleSlot(routeId) {
     }
   }
   return null;
+}
+
+function getNextEditableScheduleSlot() {
+  const cutoff = clampDate(parseDateValue(dateInput.value));
+  for (const week of schedule) {
+    for (const slot of week.slots) {
+      if (slot.fixedRouteId || parseDateValue(slot.date) < cutoff || isRideDone(slot)) continue;
+      return slot;
+    }
+  }
+  return null;
+}
+
+function planRouteForNextRide(routeId) {
+  const route = routeById.get(routeId);
+  if (!route) return;
+  const existing = getSelectedScheduleSlot(routeId);
+  if (existing) {
+    showToast(`${route.name} is already planned for ${formatRideDate(existing.slot)}.`);
+    return;
+  }
+  const slot = getNextEditableScheduleSlot();
+  if (!slot) {
+    showToast("No open ride slot left to plan.");
+    return;
+  }
+
+  Object.keys(state.planAssignments).forEach((slotId) => {
+    if (state.planAssignments[slotId] === routeId) {
+      delete state.planAssignments[slotId];
+      delete state.planPins[slotId];
+    }
+  });
+
+  state.planAssignments[slot.id] = routeId;
+  state.planPins[slot.id] = true;
+  state.selectedRouteId = routeId;
+  savePlanState();
+  refreshSchedule({ preserve: true });
+  renderAll();
+  showToast(`${route.name} planned for ${formatRideDate(slot)}.`);
 }
 
 function getGoogleMapsUrl(route) {
@@ -1238,6 +1302,7 @@ function renderWeek() {
                 <span>${route.miles} approx mi</span>
                 <span>${escapeHtml(route.surface)}</span>
                 <span class="badge">${route.energy}</span>
+                ${state.planPins[slot.id] ? '<span class="badge badge-picked">crew pick</span>' : ""}
               </p>
             </button>
             <div class="rsvp-row" aria-label="${routeName} RSVPs">
@@ -1273,7 +1338,7 @@ function renderSchedule() {
           return `
             <button type="button" class="week-row" data-route="${escapeHtml(route.id)}">
               <span>${slot.label}</span>
-              <strong>${escapeHtml(route.name)}${slot.isFinale ? ' <span class="finale-pill">Finale</span>' : ""}</strong>
+              <strong>${escapeHtml(route.name)}${slot.isFinale ? ' <span class="finale-pill">Finale</span>' : ""}${state.planPins[slot.id] ? ' <span class="finale-pill picked-pill">Crew pick</span>' : ""}</strong>
               <span>${isRideDone(slot) ? "Done" : `${formatRideDate(slot)} - ${route.miles} mi`}</span>
             </button>
           `;
@@ -1303,6 +1368,7 @@ function renderRoutes() {
             <span class="badge">${escapeHtml(route.vibe)}</span>
             ${route.custom ? '<span class="badge badge-custom">custom</span>' : ""}
             ${route.link ? '<span class="badge badge-map">map link</span>' : ""}
+            ${route.custom && getSelectedScheduleSlot(route.id) ? '<span class="badge badge-picked">planned</span>' : ""}
             ${route.id === state.selectedRouteId ? '<span class="badge badge-selected">selected</span>' : ""}
           </p>
           <p class="route-note">${escapeHtml(route.note)}</p>
@@ -1448,6 +1514,14 @@ function renderSelectedRoute() {
           <i data-lucide="message-circle"></i>
           Send to WhatsApp
         </a>
+        ${
+          route.custom && !scheduled
+            ? `<button class="inline-action action-plan" type="button" data-plan-next-route="${escapeHtml(route.id)}">
+                <i data-lucide="calendar-plus"></i>
+                Use next ride
+              </button>`
+            : ""
+        }
         <a class="inline-action action-route-map ${routeMapAction.exact ? "has-exact-route" : ""}" href="${escapeHtml(routeMapAction.url)}" target="_blank" rel="noopener noreferrer">
           <i data-lucide="${routeMapAction.exact ? "navigation" : "map-pin"}"></i>
           ${routeMapAction.label}
@@ -1676,6 +1750,7 @@ function initEvents() {
     const stravaButton = event.target.closest("[data-strava-launch]");
     const completionButton = event.target.closest("[data-toggle-route-complete]");
     const deleteCustomButton = event.target.closest("[data-delete-custom-route]");
+    const planNextButton = event.target.closest("[data-plan-next-route]");
     const disabledLink = event.target.closest("a.is-disabled");
 
     if (disabledLink) {
@@ -1704,6 +1779,11 @@ function initEvents() {
 
     if (deleteCustomButton) {
       deleteCustomRoute(deleteCustomButton.dataset.deleteCustomRoute);
+      return;
+    }
+
+    if (planNextButton) {
+      planRouteForNextRide(planNextButton.dataset.planNextRoute);
       return;
     }
 
