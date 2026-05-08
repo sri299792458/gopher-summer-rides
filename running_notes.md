@@ -112,3 +112,10 @@ Route geometry is approximate waypoint geometry for planning and visualization, 
 - Added custom routes as Crew Sync state so Sri, Apurv, and Ayaan can add route ideas together without changing the fixed summer schedule.
 - Added a post-ride panel on each selected route to mark it done and paste a Strava activity URL.
 - Browser QA found and fixed route-link preservation, mobile numeric-field friction, and escaping for crew-entered custom route text.
+
+## Mobile ride cockpit redesign
+
+- User asked for a world-class mobile-first redesign with intuitive use as the top priority, and explicitly asked for multiple agents to ideate.
+- Agent consensus: the app should feel like "open it, see the next ride, coordinate in WhatsApp, open the route map, start Strava"; planning/admin tools should move behind a bottom nav.
+- Implemented a first-pass ride cockpit: next ride card gets primary WhatsApp/Map/Strava actions, selected route detail becomes a ride sheet, custom route links become first-class Open map actions, and mobile navigation moves to the bottom.
+- Preserved Crew Sync shape, custom route IDs/form hooks, and Strava launch/activity link hooks during the redesign.

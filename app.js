@@ -900,6 +900,19 @@ function getGoogleMapsUrl(route) {
   return `https://www.google.com/maps/search/?api=1&query=${query}&query_place_id=&center=${lat},${lng}`;
 }
 
+function getExactRouteUrl(route) {
+  return normalizeExternalUrl(route.link);
+}
+
+function getRouteMapAction(route) {
+  const exactUrl = getExactRouteUrl(route);
+  return {
+    url: exactUrl || getGoogleMapsUrl(route),
+    label: exactUrl ? "Open route map" : "Map search",
+    exact: Boolean(exactUrl),
+  };
+}
+
 function getRideMeetTime(slotOrDay) {
   const day = typeof slotOrDay === "string" ? slotOrDay : slotOrDay.day;
   const override = typeof slotOrDay === "string" ? null : state.rideOverrides[slotOrDay.id];
@@ -1007,6 +1020,7 @@ function getRsvpSummary(route) {
 function buildWhatsAppText(route) {
   const scheduled = getSelectedScheduleSlot(route.id);
   const note = scheduled ? getRidePlanNote(scheduled.slot) : "";
+  const routeMapUrl = getExactRouteUrl(route);
   const when = scheduled
     ? `${scheduled.slot.day}, ${formatRideDate(scheduled.slot)} at ${getRideMeetTime(scheduled.slot)}`
     : "summer 2026";
@@ -1018,6 +1032,7 @@ function buildWhatsAppText(route) {
     `RSVP: ${getRsvpSummary(route)}`,
   ];
   if (note) lines.push(`Plan note: ${note}`);
+  if (routeMapUrl) lines.push(`Route map: ${routeMapUrl}`);
   if (getPhotosAlbumUrl()) lines.push(`Photos: ${getPhotosAlbumUrl()}`);
   lines.push(`Track on Strava after the ride. Plan: ${buildRouteUrl(route.id)}`);
   return lines.join("\n");
@@ -1175,16 +1190,24 @@ function renderWeek() {
   }
 
   weekRides.innerHTML = entries
-    .map(({ slot, route }) => {
+    .map(({ slot, route }, index) => {
       const key = rideKey(slot);
       const done = isRideDone(slot);
       const routeName = escapeHtml(route.name);
+      const isNextRide = index === 0;
+      const routeMapAction = getRouteMapAction(route);
       return `
-        <article class="ride-card">
+        <article class="ride-card ${isNextRide ? "is-next" : ""}">
           <div class="day-pill">${slot.label}</div>
           <div class="ride-main">
             <button type="button" class="route-select-link" data-route="${escapeHtml(route.id)}">
+              ${isNextRide ? '<p class="eyebrow">Next ride</p>' : ""}
               <h3>${routeName}</h3>
+              ${
+                isNextRide
+                  ? `<p class="next-ride-meta">${formatRideDate(slot)} at ${escapeHtml(getRideMeetTime(slot))} - ${escapeHtml(getRideMeetSpot(slot))}</p>`
+                  : ""
+              }
               <p class="meta-line">
                 <span>${route.miles} approx mi</span>
                 <span>${escapeHtml(route.surface)}</span>
@@ -1201,6 +1224,24 @@ function renderWeek() {
                 })
                 .join("")}
             </div>
+            ${
+              isNextRide
+                ? `<div class="ride-card-actions">
+                    <a class="inline-action action-whatsapp" href="${getWhatsAppUrl(route)}" target="_blank" rel="noopener noreferrer">
+                      <i data-lucide="message-circle"></i>
+                      WhatsApp
+                    </a>
+                    <a class="inline-action action-route-map ${routeMapAction.exact ? "has-exact-route" : ""}" href="${escapeHtml(routeMapAction.url)}" target="_blank" rel="noopener noreferrer">
+                      <i data-lucide="${routeMapAction.exact ? "navigation" : "map-pin"}"></i>
+                      Map
+                    </a>
+                    <a class="inline-action action-strava" href="${getStravaLaunchUrl()}" data-strava-launch>
+                      <i data-lucide="activity"></i>
+                      Strava
+                    </a>
+                  </div>`
+                : ""
+            }
           </div>
           <button class="ride-action ${done ? "is-done" : ""}" type="button" data-done-key="${escapeHtml(key)}" data-done-route="${escapeHtml(route.id)}" title="Toggle done" aria-label="Mark ${routeName} ${done ? "incomplete" : "complete"}" aria-pressed="${done}">
             <i data-lucide="${done ? "check" : "circle"}"></i>
@@ -1253,6 +1294,7 @@ function renderRoutes() {
             <span>${route.minutes} min</span>
             <span class="badge">${escapeHtml(route.vibe)}</span>
             ${route.custom ? '<span class="badge badge-custom">custom</span>' : ""}
+            ${route.id === state.selectedRouteId ? '<span class="badge badge-selected">selected</span>' : ""}
           </p>
           <p class="route-note">${escapeHtml(route.note)}</p>
         </button>
@@ -1308,10 +1350,15 @@ function renderSelectedRoute() {
   const rideOverride = scheduled ? state.rideOverrides[scheduled.slot.id] || {} : {};
   const meetTime = scheduled ? getRideMeetTime(scheduled.slot) : state.preferences.weeknightTime;
   const meetSpot = scheduled ? getRideMeetSpot(scheduled.slot) : state.preferences.meetSpot;
+  const routeMapAction = getRouteMapAction(route);
+  const exactRouteUrl = getExactRouteUrl(route);
   const routeSources = (route.sourceKeys || [])
     .map((key) => sources[key])
     .filter(Boolean);
-  const learnMoreLinks = (route.learnMore || []).filter((link) => link && normalizeExternalUrl(link.url));
+  const learnMoreLinks = (route.learnMore || []).filter((link) => {
+    const url = link && normalizeExternalUrl(link.url);
+    return url && url !== exactRouteUrl;
+  });
   const caveat = route.caveat ? `<p class="route-caveat">${escapeHtml(route.caveat)}</p>` : "";
   const mapNote = route.custom ? '<p class="route-caveat">Custom route map is approximate unless the route link has exact navigation.</p>' : "";
   selectedTitle.textContent = route.name;
@@ -1320,16 +1367,10 @@ function renderSelectedRoute() {
   selectedTime.textContent = route.minutes;
   selectedEnergy.textContent = route.energy;
   detailDock.innerHTML = `
-    <div>
-      <p class="eyebrow">${escapeHtml(route.start)}</p>
+    <div class="ride-sheet-main">
+      <p class="eyebrow">${escapeHtml(scheduledText)}</p>
       <h2>${escapeHtml(route.surface)}${route.custom ? ' <span class="custom-route-tag">Custom</span>' : ""}</h2>
       <p>${escapeHtml(route.note)}</p>
-      ${caveat}
-      ${mapNote}
-      <p class="data-note">${escapeHtml(route.distanceMethod)}. ${escapeHtml(route.geometryPrecision)}. Last verified ${escapeHtml(route.lastVerified)}.</p>
-    </div>
-    <div>
-      <p class="eyebrow">${escapeHtml(scheduledText)}</p>
       <div class="stop-list">${route.stops.map((stop) => `<span>${escapeHtml(stop)}</span>`).join("")}</div>
       <div class="ride-ops">
         <div>
@@ -1344,6 +1385,20 @@ function renderSelectedRoute() {
           <span>Track</span>
           <strong>${state.preferences.stravaClub ? "Club" : "Strava"}</strong>
         </div>
+      </div>
+      <div class="action-grid action-grid-primary">
+        <a class="inline-action action-whatsapp" href="${getWhatsAppUrl(route)}" target="_blank" rel="noopener noreferrer">
+          <i data-lucide="message-circle"></i>
+          WhatsApp
+        </a>
+        <a class="inline-action action-route-map ${routeMapAction.exact ? "has-exact-route" : ""}" href="${escapeHtml(routeMapAction.url)}" target="_blank" rel="noopener noreferrer">
+          <i data-lucide="${routeMapAction.exact ? "navigation" : "map-pin"}"></i>
+          ${routeMapAction.exact ? "Open map" : "Map search"}
+        </a>
+        <a class="inline-action action-strava" href="${getStravaLaunchUrl()}" data-strava-launch>
+          <i data-lucide="activity"></i>
+          Strava
+        </a>
       </div>
       ${
         scheduled
@@ -1363,6 +1418,8 @@ function renderSelectedRoute() {
             </div>`
           : ""
       }
+    </div>
+    <div class="ride-sheet-more">
       <div class="post-ride-panel">
         <div class="post-ride-heading">
           <div>
@@ -1384,19 +1441,13 @@ function renderSelectedRoute() {
             : ""
         }
       </div>
-      <div class="action-grid">
-        <a class="inline-action action-whatsapp" href="${getWhatsAppUrl(route)}" target="_blank" rel="noopener noreferrer">
-          <i data-lucide="message-circle"></i>
-          Send to WhatsApp
-        </a>
-        <a class="inline-action action-strava" href="${getStravaLaunchUrl()}" data-strava-launch>
-          <i data-lucide="activity"></i>
-          Start Strava
-        </a>
-        <a class="inline-action" href="${getGoogleMapsUrl(route)}" target="_blank" rel="noopener noreferrer">
-          <i data-lucide="map-pin"></i>
-          Map search
-        </a>
+      <div class="ride-context">
+        <p class="eyebrow">${escapeHtml(route.start)}</p>
+        ${caveat}
+        ${mapNote}
+        <p class="data-note">${escapeHtml(route.distanceMethod)}. ${escapeHtml(route.geometryPrecision)}. Last verified ${escapeHtml(route.lastVerified)}.</p>
+      </div>
+      <div class="secondary-actions">
         ${
           getPhotosAlbumUrl()
             ? `<a class="inline-action action-photos" href="${escapeHtml(getPhotosAlbumUrl())}" target="_blank" rel="noopener noreferrer">
@@ -1500,7 +1551,8 @@ function initMap() {
     scrollWheelZoom: true,
   }).setView([44.9757, -93.2342], 12);
 
-  L.control.zoom({ position: "bottomright" }).addTo(map);
+  const zoomPosition = window.matchMedia && window.matchMedia("(max-width: 960px)").matches ? "topright" : "bottomright";
+  L.control.zoom({ position: zoomPosition }).addTo(map);
   const tileLayer = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
     attribution: "&copy; OpenStreetMap contributors",
@@ -1558,6 +1610,9 @@ function focusSelectedRoutePanel() {
   if (!window.matchMedia || !window.matchMedia("(max-width: 960px)").matches) return;
   const panel = document.querySelector(".map-panel");
   if (panel) panel.scrollIntoView({ behavior: "smooth", block: "start" });
+  if (map) {
+    window.setTimeout(() => map.invalidateSize(), 260);
+  }
 }
 
 function focusInitialMobileDeepLink(params) {

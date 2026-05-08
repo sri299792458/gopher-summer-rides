@@ -24,6 +24,7 @@ Primary sources include Minneapolis Park and Recreation Board, Three Rivers Park
 - Vibe and energy filters.
 - Per-browser completion tracking.
 - WhatsApp ride-plan handoff for Sri, Apurv, and Ayaan.
+- Mobile-first ride cockpit with next-ride actions for WhatsApp, route maps, and Strava.
 - Crew-added custom routes shared through Crew Sync.
 - Custom rider names, optional Strava club and Photos links, and per-ride meet setup.
 - Per-ride RSVP chips for quick local planning.
