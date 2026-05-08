@@ -110,6 +110,7 @@ const state = {
   selectedRouteId: "stone-arch-boom",
   activeVibe: "all",
   activeTab: "schedule",
+  routeQuery: "",
   completed: new Set(safeArrayStorage("completedRides", [])),
   riders: safeArrayStorage("riders", defaultRiders),
   preferences: { ...defaultPreferences, ...safeObjectStorage("ridePreferences", {}) },
@@ -141,6 +142,7 @@ const weekRides = document.querySelector("#weekRides");
 const scheduleList = document.querySelector("#scheduleList");
 const routeList = document.querySelector("#routeList");
 const routeCount = document.querySelector("#routeCount");
+const routeSearchInput = document.querySelector("#routeSearch");
 const selectedTitle = document.querySelector("#selectedTitle");
 const selectedVibe = document.querySelector("#selectedVibe");
 const selectedMiles = document.querySelector("#selectedMiles");
@@ -916,6 +918,7 @@ function getInitialParams() {
     energy: params.get("energy"),
     date: params.get("date"),
     sync: params.get("sync"),
+    q: params.get("q"),
   };
 }
 
@@ -925,6 +928,7 @@ function updateUrlState() {
   if (state.selectedRouteId !== "stone-arch-boom") params.set("route", state.selectedRouteId);
   if (state.activeTab !== "schedule") params.set("tab", state.activeTab);
   if (state.activeVibe !== "all") params.set("vibe", state.activeVibe);
+  if (state.routeQuery) params.set("q", state.routeQuery);
   if (energyFilter.value !== "all") params.set("energy", energyFilter.value);
   if (dateInput.value !== formatDateValue(clampDate(new Date()))) params.set("date", dateInput.value);
   const next = params.toString() ? `${window.location.pathname}?${params}` : window.location.pathname;
@@ -1462,9 +1466,40 @@ function renderSchedule() {
     .join("");
 }
 
+function routeMatchesQuery(route, query) {
+  const terms = String(query || "")
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!terms.length) return true;
+  const haystack = [
+    route.name,
+    route.note,
+    route.surface,
+    route.start,
+    route.energy,
+    route.vibe,
+    ...(route.stops || []),
+    ...(route.learnMore || []).map((link) => link.title || link.label || ""),
+  ]
+    .join(" ")
+    .toLowerCase();
+  return terms.every((term) => haystack.includes(term));
+}
+
 function renderRoutes() {
-  const visibleRoutes = routes.filter((route) => state.activeVibe === "all" || route.vibe === state.activeVibe);
-  routeCount.textContent = `${visibleRoutes.length} routes`;
+  const query = state.routeQuery.trim();
+  const visibleRoutes = routes.filter((route) => (state.activeVibe === "all" || route.vibe === state.activeVibe) && routeMatchesQuery(route, query));
+  routeCount.textContent = query ? `${visibleRoutes.length} matches` : `${visibleRoutes.length} routes`;
+  if (!visibleRoutes.length) {
+    routeList.innerHTML = `
+      <div class="empty-state">
+        <h3>No routes found</h3>
+        <p>Try a place, stop, surface, or clear the vibe filter.</p>
+      </div>
+    `;
+    return;
+  }
   routeList.innerHTML = visibleRoutes
     .map((route) => `
       <article class="route-card ${route.id === state.selectedRouteId ? "is-selected" : ""}">
@@ -2006,6 +2041,13 @@ function initEvents() {
     renderWeek();
     updateUrlState();
   });
+  if (routeSearchInput) {
+    routeSearchInput.addEventListener("input", () => {
+      state.routeQuery = routeSearchInput.value.trim();
+      renderRoutes();
+      updateUrlState();
+    });
+  }
   document.body.addEventListener("input", (event) => {
     const overrideInput = event.target.closest("[data-ride-override]");
     const activityInput = event.target.closest("[data-activity-link]");
@@ -2092,8 +2134,10 @@ function boot() {
   if (["all", "easy", "steady", "big"].includes(params.energy)) energyFilter.value = params.energy;
   if (params.route && routeById.has(params.route)) state.selectedRouteId = params.route;
   if (params.vibe && ["all", "water", "city", "green", "destination"].includes(params.vibe)) state.activeVibe = params.vibe;
+  if (params.q) state.routeQuery = params.q.trim();
   if (params.tab && ["schedule", "routes", "crew"].includes(params.tab)) state.activeTab = params.tab;
   renderCrewControls();
+  if (routeSearchInput) routeSearchInput.value = state.routeQuery;
   initEvents();
   updateSyncControls();
   renderAll();

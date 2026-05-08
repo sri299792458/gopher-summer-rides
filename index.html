@@ -12,7 +12,7 @@
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       crossorigin=""
     />
-    <link rel="stylesheet" href="styles.css?v=20260508-public-share-links" />
+    <link rel="stylesheet" href="styles.css?v=20260508-route-search" />
   </head>
   <body>
     <div class="app-shell">
@@ -122,6 +122,10 @@
               <button class="filter-chip" type="button" data-vibe="green" aria-pressed="false">Green</button>
               <button class="filter-chip" type="button" data-vibe="destination" aria-pressed="false">Destination</button>
             </div>
+            <label class="route-search-field">
+              <span>Search routes</span>
+              <input id="routeSearch" type="search" placeholder="Witch's Hat, coffee, river" />
+            </label>
             <details class="custom-route-panel">
               <summary>
                 <i data-lucide="plus"></i>
@@ -282,7 +286,7 @@
       crossorigin=""
     ></script>
     <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.js"></script>
-    <script src="data/dataset.js?v=20260508-public-share-links"></script>
-    <script src="app.js?v=20260508-public-share-links"></script>
+    <script src="data/dataset.js?v=20260508-route-search"></script>
+    <script src="app.js?v=20260508-route-search"></script>
   </body>
 </html>

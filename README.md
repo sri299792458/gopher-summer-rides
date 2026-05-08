@@ -23,6 +23,7 @@ Primary sources include Minneapolis Park and Recreation Board, Three Rivers Park
 - A next-ride strip surfaces the upcoming unfinished ride with map and WhatsApp actions.
 - Interactive route sketch map.
 - Vibe and energy filters.
+- Route search across names, stops, notes, surfaces, and discovery links.
 - Per-browser completion tracking.
 - WhatsApp ride-plan handoff for Sri, Apurv, and Ayaan.
 - Shared route and sync links use the public Pages URL even when testing locally.
