@@ -83,6 +83,7 @@ check(app.includes('document.addEventListener("visibilitychange", pullCrewSyncOn
 check(app.includes('window.addEventListener("online", pullCrewSyncOnResume)'), "app refreshes crew sync after reconnecting");
 check(app.includes("data-swap-next-ride"), "app exposes a next-open-ride swap action");
 check(app.includes("data-unpin-next-ride"), "app exposes a next-open-ride unpin action");
+check(app.includes('data-strava-launch aria-label="Start Strava for'), "next ride strip exposes Strava launch");
 check(!app.includes("?.") && !app.includes("??"), "app avoids optional chaining/nullish coalescing for older mobile browsers");
 
 const sandbox = { window: {}, console };

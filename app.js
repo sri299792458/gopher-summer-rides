@@ -1533,6 +1533,10 @@ function renderNextRideStrip() {
         <i data-lucide="message-circle"></i>
         <span>WhatsApp</span>
       </a>
+      <a class="mini-action" href="${getStravaLaunchUrl()}" data-strava-launch aria-label="Start Strava for ${escapeHtml(route.name)}">
+        <i data-lucide="activity"></i>
+        <span>Strava</span>
+      </a>
       ${
         canSwapRide
           ? `<button class="mini-action" type="button" data-swap-next-ride aria-label="Swap ${escapeHtml(route.name)} with another upcoming ride">

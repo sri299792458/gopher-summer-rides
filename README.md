@@ -20,7 +20,7 @@ Primary sources include Minneapolis Park and Recreation Board, Three Rivers Park
 
 - Adaptive 36-ride summer queue with a May 8 kickoff and a Tue/Thu/Sat rhythm.
 - Mobile-first layout with the weekly plan, selected route controls, and map optimized for phones.
-- A next-ride strip surfaces the upcoming unfinished ride with map and WhatsApp actions.
+- A next-ride strip surfaces the upcoming unfinished ride with map, WhatsApp, and Strava actions.
 - Interactive route sketch map.
 - Vibe and energy filters.
 - Route search across names, stops, notes, surfaces, and discovery links.

@@ -150,3 +150,9 @@ Route geometry is approximate waypoint geometry for planning and visualization, 
 - Added an "Unpin" action for crew-picked next rides so a route can become refreshable again without clearing the rest of the plan.
 - The action only appears on editable pinned next rides and preserves locked kickoff/finale rides.
 - Bumped the static asset version for the deployed bundle.
+
+## Next ride Strava action
+
+- Added a Strava launch action directly to the next-ride strip so the morning flow has map, WhatsApp, and tracking from the first card.
+- Reused the existing app-only Strava handoff with no web fallback, keeping the previous mobile-login fix intact.
+- Bumped the static asset version for GitHub Pages.
