@@ -31,9 +31,14 @@ body {
     sans-serif;
 }
 
+body {
+  overflow-x: hidden;
+}
+
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -48,19 +53,21 @@ button {
 
 .app-shell {
   min-height: 100vh;
-  display: grid;
-  grid-template-columns: minmax(380px, 480px) minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
 }
 
 .planner-panel {
-  min-height: 100vh;
-  max-height: 100vh;
-  overflow-y: auto;
-  padding: 24px;
+  padding: 16px;
   background:
     linear-gradient(180deg, rgba(122, 31, 43, 0.08), transparent 220px),
     var(--paper);
-  border-right: 1px solid rgba(32, 33, 36, 0.12);
+  border-bottom: 1px solid rgba(32, 33, 36, 0.12);
+}
+
+.views-panel {
+  padding: 0 16px 18px;
+  background: var(--paper);
 }
 
 .app-header,
@@ -83,7 +90,13 @@ button {
 }
 
 .app-header {
-  margin-bottom: 20px;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+
+.section-heading {
+  align-items: flex-start;
+  flex-wrap: wrap;
 }
 
 .eyebrow {
@@ -105,7 +118,7 @@ p {
 h1 {
   margin-bottom: 0;
   color: var(--maroon);
-  font-size: 2.1rem;
+  font-size: 1.75rem;
   line-height: 1.02;
 }
 
@@ -153,7 +166,7 @@ h3 {
 
 .control-strip {
   display: grid;
-  grid-template-columns: 1fr 130px;
+  grid-template-columns: minmax(0, 1fr) minmax(96px, 112px);
   gap: 10px;
   margin-bottom: 16px;
 }
@@ -174,6 +187,7 @@ h3 {
 .ride-customizer input,
 .ride-customizer textarea {
   min-height: 42px;
+  min-width: 0;
   width: 100%;
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -202,7 +216,6 @@ h3 {
 
 .today-card {
   padding: 16px;
-  margin-bottom: 16px;
 }
 
 .season-meter {
@@ -245,21 +258,22 @@ h3 {
 
 .ride-card {
   display: grid;
-  grid-template-columns: 68px 1fr auto;
-  gap: 12px;
+  grid-template-columns: 46px minmax(0, 1fr) 40px;
+  gap: 10px;
   align-items: center;
-  padding: 12px;
+  padding: 10px;
 }
 
 .ride-main {
   display: grid;
   gap: 9px;
+  min-width: 0;
 }
 
 .day-pill {
   display: grid;
   place-items: center;
-  min-height: 54px;
+  min-height: 44px;
   border-radius: var(--radius);
   color: var(--white);
   background: var(--maroon);
@@ -278,9 +292,11 @@ h3 {
 .route-card h3 {
   margin: 0 0 4px;
   font-size: 0.98rem;
+  overflow-wrap: anywhere;
 }
 
 .route-select-link {
+  min-width: 0;
   border: 0;
   background: transparent;
   color: inherit;
@@ -347,6 +363,7 @@ h3 {
 
 .ride-action {
   min-width: 38px;
+  width: 100%;
   height: 38px;
   display: grid;
   place-items: center;
@@ -360,8 +377,15 @@ h3 {
 }
 
 .tab-list {
+  position: sticky;
+  z-index: 700;
+  top: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   margin-bottom: 12px;
+  padding: 8px 0;
+  background: var(--paper);
 }
 
 .tab {
@@ -373,6 +397,7 @@ h3 {
   flex: 1;
   border-radius: var(--radius);
   font-weight: 850;
+  min-width: 0;
 }
 
 .tab.is-active {
@@ -387,7 +412,7 @@ h3 {
 
 .tab-panel {
   display: none;
-  padding: 16px;
+  padding: 14px;
 }
 
 .tab-panel.is-active {
@@ -413,6 +438,11 @@ h3 {
 }
 
 .button-row {
+  flex-wrap: wrap;
+}
+
+.panel-title-row {
+  align-items: flex-start;
   flex-wrap: wrap;
 }
 
@@ -450,21 +480,27 @@ h3 {
 
 .week-row {
   display: grid;
-  grid-template-columns: 36px 1fr auto;
+  grid-template-columns: 42px minmax(0, 1fr);
   gap: 8px;
-  align-items: center;
+  align-items: start;
   width: 100%;
-  min-height: 30px;
+  min-height: 44px;
   border: 0;
   background: transparent;
   color: var(--muted);
   font-size: 0.85rem;
   text-align: left;
-  padding: 0;
+  padding: 6px 0;
 }
 
 .week-row strong {
   color: var(--ink);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.week-row span:last-child {
+  grid-column: 2;
 }
 
 .finale-pill {
@@ -509,6 +545,7 @@ h3 {
 }
 
 .route-card button {
+  min-width: 0;
   width: 100%;
   padding: 0;
   border: 0;
@@ -532,13 +569,13 @@ h3 {
 }
 
 .custom-grid {
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
 }
 
 .sync-card {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
+  grid-template-columns: 1fr;
+  align-items: stretch;
   gap: 12px;
   margin: 14px 0;
   padding: 12px;
@@ -557,6 +594,7 @@ h3 {
   color: var(--muted);
   font-size: 0.82rem;
   font-weight: 760;
+  overflow-wrap: anywhere;
 }
 
 #syncStatus[data-tone="ok"] {
@@ -573,7 +611,7 @@ h3 {
 
 .status-board {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   margin: 14px 0;
 }
@@ -624,38 +662,49 @@ h3 {
 }
 
 .map-panel {
-  position: sticky;
-  top: 0;
-  height: 100vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
   min-width: 0;
+  padding: 16px;
+  background: var(--paper);
 }
 
 #map {
-  height: 100%;
+  order: 1;
+  height: min(56vh, 380px);
+  min-height: 280px;
   width: 100%;
+  overflow: hidden;
+  border: 1px solid rgba(32, 33, 36, 0.12);
+  border-radius: var(--radius);
   background: #dbe6dc;
 }
 
 .map-overlay {
-  position: absolute;
+  order: 0;
+  position: static;
   z-index: 500;
-  top: 24px;
-  left: 24px;
-  right: 24px;
-  min-height: 92px;
-  padding: 16px 18px;
-  backdrop-filter: blur(12px);
+  display: grid;
+  align-items: stretch;
+  justify-content: stretch;
+  gap: 10px;
+  min-height: 0;
+  margin-bottom: 10px;
+  padding: 12px;
+  backdrop-filter: none;
 }
 
 .map-overlay h2 {
   color: var(--maroon);
-  font-size: 1.45rem;
+  font-size: 1.2rem;
+  overflow-wrap: anywhere;
 }
 
 .route-stats {
   gap: 10px;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 
 .route-stats span {
@@ -672,16 +721,15 @@ h3 {
 }
 
 .detail-dock {
-  position: absolute;
+  order: 2;
+  position: static;
   z-index: 500;
-  left: 24px;
-  right: 24px;
-  bottom: 24px;
   display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
+  grid-template-columns: 1fr;
   gap: 14px;
-  padding: 16px;
-  backdrop-filter: blur(12px);
+  margin-top: 10px;
+  padding: 12px;
+  backdrop-filter: none;
 }
 
 .detail-dock p {
@@ -766,7 +814,7 @@ h3 {
 
 .ride-ops {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: 1fr;
   gap: 8px;
   margin-bottom: 12px;
 }
@@ -791,11 +839,12 @@ h3 {
   margin-top: 3px;
   color: var(--ink);
   font-size: 0.9rem;
+  overflow-wrap: anywhere;
 }
 
 .ride-customizer {
   display: grid;
-  grid-template-columns: 120px 1fr;
+  grid-template-columns: 1fr;
   gap: 8px;
   margin: 0 0 12px;
 }
@@ -917,85 +966,155 @@ h3 {
   font-family: inherit;
 }
 
-@media (max-width: 960px) {
-  .app-shell {
+@media (max-width: 360px) {
+  .control-strip,
+  .status-board,
+  .action-grid {
     grid-template-columns: 1fr;
   }
 
-  .planner-panel {
-    min-height: auto;
-    max-height: none;
-    border-right: 0;
-    border-bottom: 1px solid rgba(32, 33, 36, 0.12);
-  }
-
-  .map-panel {
-    position: relative;
-    height: 68vh;
-    min-height: 620px;
+  .tab {
+    font-size: 0.82rem;
   }
 }
 
-@media (max-width: 640px) {
-  .planner-panel {
-    padding: 16px;
+@media (min-width: 961px) {
+  .app-shell {
+    height: 100vh;
+    display: grid;
+    grid-template-columns: minmax(380px, 480px) minmax(0, 1fr);
+    grid-template-rows: minmax(320px, 48vh) minmax(0, 1fr);
+    overflow: hidden;
   }
 
-  .app-header {
-    align-items: flex-start;
+  .planner-panel {
+    grid-column: 1;
+    grid-row: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 24px 24px 8px;
+    border-right: 1px solid rgba(32, 33, 36, 0.12);
+    border-bottom: 0;
+  }
+
+  .views-panel {
+    grid-column: 1;
+    grid-row: 2;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0 24px 24px;
+    border-right: 1px solid rgba(32, 33, 36, 0.12);
   }
 
   h1 {
-    font-size: 1.75rem;
+    font-size: 2.1rem;
   }
 
-  .control-strip,
-  .ride-card,
-  .detail-dock,
-  .status-board,
-  .action-grid,
-  .custom-grid,
-  .sync-card,
-  .ride-ops,
-  .ride-customizer {
-    grid-template-columns: 1fr;
+  .app-header {
+    margin-bottom: 20px;
   }
 
   .ride-card {
-    align-items: stretch;
+    grid-template-columns: 68px minmax(0, 1fr) auto;
+    gap: 12px;
+    padding: 12px;
   }
 
   .day-pill {
-    min-height: 38px;
+    min-height: 54px;
   }
 
   .ride-action {
-    width: 100%;
+    width: auto;
   }
 
   .tab-list {
-    display: grid;
-    grid-template-columns: 1fr;
+    position: static;
+    display: flex;
+    padding: 0;
+    background: transparent;
+  }
+
+  .tab-panel {
+    padding: 16px;
+  }
+
+  .week-row {
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+    align-items: center;
+    min-height: 30px;
+    padding: 0;
+  }
+
+  .week-row span:last-child {
+    grid-column: auto;
+  }
+
+  .custom-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .sync-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .ride-ops {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .ride-customizer {
+    grid-template-columns: 120px minmax(0, 1fr);
   }
 
   .map-panel {
-    min-height: 700px;
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    position: sticky;
+    top: 0;
+    display: block;
+    height: 100vh;
+    padding: 0;
+    background: transparent;
+  }
+
+  #map {
+    height: 100%;
+    min-height: 0;
+    border: 0;
+    border-radius: 0;
   }
 
   .map-overlay {
-    top: 12px;
-    left: 12px;
-    right: 12px;
-    display: grid;
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    right: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 92px;
+    margin: 0;
+    padding: 16px 18px;
+    backdrop-filter: blur(12px);
+  }
+
+  .map-overlay h2 {
+    font-size: 1.45rem;
   }
 
   .route-stats {
-    justify-content: flex-start;
+    justify-content: flex-end;
   }
 
   .detail-dock {
-    left: 12px;
-    right: 12px;
-    bottom: 12px;
+    position: absolute;
+    left: 24px;
+    right: 24px;
+    bottom: 24px;
+    grid-template-columns: 1.2fr 0.8fr;
+    margin: 0;
+    padding: 16px;
+    backdrop-filter: blur(12px);
   }
 }

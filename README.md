@@ -19,6 +19,7 @@ Primary sources include Minneapolis Park and Recreation Board, Three Rivers Park
 ## Features
 
 - Adaptive 36-ride summer queue with a May 8 kickoff and a Tue/Thu/Sat rhythm.
+- Mobile-first layout with the weekly plan, selected route controls, and map optimized for phones.
 - Interactive route sketch map.
 - Vibe and energy filters.
 - Per-browser completion tracking.
@@ -27,9 +28,9 @@ Primary sources include Minneapolis Park and Recreation Board, Three Rivers Park
 - Per-ride RSVP chips for quick local planning.
 - Default 6:30 AM meet time with per-ride meet-time, meet-spot, and note overrides.
 - Refreshable upcoming route picks, while completed rides and the Grand Rounds finale stay locked.
-- Strava app handoff for starting a recording, with a mobile/web fallback and optional club link.
+- Strava app handoff for starting a recording, plus an optional separate club link.
 - Shared crew sync link for names, settings, RSVPs, completed rides, route queue, and ride overrides.
-- Default Google Photos album link for ride photos.
+- Optional private Photos album link saved in crew settings instead of hard-coded into the public site.
 - `.ics` calendar export for the full summer plan.
 - Official status/source links and route caveats.
 

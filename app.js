@@ -52,7 +52,7 @@ const defaultPreferences = {
   saturdayTime: "06:30",
   meetSpot: "UMN East Bank",
   stravaClub: "",
-  photosAlbum: "https://photos.app.goo.gl/wYKviEyYacmUMBcR9",
+  photosAlbum: "",
 };
 
 const state = {
@@ -422,7 +422,7 @@ function updateSyncControls(message, tone = "idle") {
   syncStatus.dataset.tone = tone;
   if (startSyncButton) {
     startSyncButton.disabled = isConnected || syncState.busy;
-    startSyncButton.innerHTML = `<i data-lucide="${isConnected ? "cloud-check" : "cloud"}"></i>${isConnected ? "Sync on" : "Start sync"}`;
+    startSyncButton.innerHTML = `<i data-lucide="cloud"></i>${isConnected ? "Sync on" : "Start sync"}`;
   }
   if (copySyncLinkButton) copySyncLinkButton.disabled = !isConnected;
   if (pullSyncButton) pullSyncButton.disabled = !isConnected || syncState.busy;
@@ -827,36 +827,23 @@ function getStravaClubUrl() {
   return state.preferences.stravaClub.startsWith("http") ? state.preferences.stravaClub : "";
 }
 
-function getStravaFallbackUrl() {
-  return getStravaClubUrl() || "https://www.strava.com/mobile";
-}
-
 function getPhotosAlbumUrl() {
   return state.preferences.photosAlbum?.startsWith("http") ? state.preferences.photosAlbum : "";
 }
 
 function getStravaLaunchUrl() {
-  const fallback = encodeURIComponent(getStravaFallbackUrl());
   if (/Android/i.test(navigator.userAgent)) {
-    return `intent://record#Intent;scheme=strava;package=com.strava;S.browser_fallback_url=${fallback};end`;
+    return "intent://record#Intent;scheme=strava;package=com.strava;end";
   }
   return "strava://record";
 }
 
 function openStravaApp(event) {
   event.preventDefault();
-  const fallbackUrl = getStravaFallbackUrl();
   const launchUrl = getStravaLaunchUrl();
-  const startedAt = Date.now();
 
   showToast("Opening Strava app...");
-  window.location.href = launchUrl;
-
-  window.setTimeout(() => {
-    if (document.hidden || Date.now() - startedAt > 2500) return;
-    window.open(fallbackUrl, "_blank", "noopener,noreferrer");
-    showToast("Opened Strava fallback.");
-  }, 900);
+  window.location.assign(launchUrl);
 }
 
 function pad(number) {
@@ -1143,7 +1130,7 @@ function renderSelectedRoute() {
           <i data-lucide="message-circle"></i>
           Send to WhatsApp
         </a>
-        <a class="inline-action action-strava" href="${getStravaFallbackUrl()}" data-strava-launch>
+        <a class="inline-action action-strava" href="${getStravaLaunchUrl()}" data-strava-launch>
           <i data-lucide="activity"></i>
           Start Strava
         </a>

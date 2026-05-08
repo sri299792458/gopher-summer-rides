@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Gopher Summer Rides</title>
+    <link rel="icon" href="data:," />
     <link rel="preconnect" href="https://unpkg.com" />
     <link rel="preconnect" href="https://tile.openstreetmap.org" />
     <link
@@ -55,7 +56,25 @@
           </div>
           <div class="ride-stack" id="weekRides" aria-live="polite"></div>
         </section>
+      </aside>
 
+      <section class="map-panel" aria-label="Selected route map">
+        <div id="map"></div>
+        <div class="map-overlay">
+          <div>
+            <p class="eyebrow" id="selectedVibe">Water</p>
+            <h2 id="selectedTitle">Stone Arch + Boom Island</h2>
+          </div>
+          <div class="route-stats">
+            <span><i data-lucide="route"></i><strong id="selectedMiles">8</strong> approx mi</span>
+            <span><i data-lucide="timer"></i><strong id="selectedTime">55</strong> min</span>
+            <span><i data-lucide="gauge"></i><strong id="selectedEnergy">Easy</strong></span>
+          </div>
+        </div>
+        <div class="detail-dock" id="detailDock" aria-live="polite"></div>
+      </section>
+
+      <section class="views-panel" aria-label="Planner views">
         <nav class="tab-list" role="tablist" aria-label="Planner views">
           <button class="tab is-active" id="scheduleTab" role="tab" aria-selected="true" aria-controls="schedulePanel" type="button" data-tab="schedule">
             <i data-lucide="calendar-days"></i>
@@ -142,8 +161,8 @@
                 <input id="stravaClub" type="url" placeholder="https://www.strava.com/clubs/..." />
               </label>
               <label class="crew-member">
-                <span>Google Photos</span>
-                <input id="photosAlbum" type="url" value="https://photos.app.goo.gl/wYKviEyYacmUMBcR9" />
+                <span>Photos album</span>
+                <input id="photosAlbum" type="url" placeholder="Paste private album link" />
               </label>
             </div>
             <div class="sync-card">
@@ -195,22 +214,6 @@
           </section>
 
         </main>
-      </aside>
-
-      <section class="map-panel" aria-label="Selected route map">
-        <div id="map"></div>
-        <div class="map-overlay">
-          <div>
-            <p class="eyebrow" id="selectedVibe">Water</p>
-            <h2 id="selectedTitle">Stone Arch + Boom Island</h2>
-          </div>
-          <div class="route-stats">
-            <span><i data-lucide="route"></i><strong id="selectedMiles">8</strong> approx mi</span>
-            <span><i data-lucide="timer"></i><strong id="selectedTime">55</strong> min</span>
-            <span><i data-lucide="gauge"></i><strong id="selectedEnergy">Easy</strong></span>
-          </div>
-        </div>
-        <div class="detail-dock" id="detailDock" aria-live="polite"></div>
       </section>
     </div>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
