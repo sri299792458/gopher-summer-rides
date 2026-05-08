@@ -1538,7 +1538,7 @@ function renderNextRideStrip() {
     <div class="next-ride-actions">
       <a class="mini-action" href="${escapeHtml(routeMapAction.url)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHtml(routeMapAction.label)} for ${escapeHtml(route.name)}">
         <i data-lucide="${routeMapAction.exact ? "navigation" : "map-pin"}"></i>
-        <span>Map</span>
+        <span>Directions</span>
       </a>
       <a class="mini-action" href="${getWhatsAppUrl(route)}" target="_blank" rel="noopener noreferrer" aria-label="Send ${escapeHtml(route.name)} to WhatsApp">
         <i data-lucide="message-circle"></i>

@@ -179,3 +179,9 @@ Residual risks: route geometry and distances remain planning approximations, Str
 - Replaced the built-in Google Maps fallback from search URLs to bicycling directions URLs with origin, destination, and route waypoints.
 - Added bridge-approach waypoints to Campus Coffee so the in-app preview no longer draws a fake diagonal river crossing.
 - Updated the smoke check so built-in map actions must keep using Google Maps directions with bicycling mode.
+
+## All-route map audit
+
+- Added `tools/route-audit.mjs` to check every dataset route, print its Google Maps bicycling directions URL, verify origin/destination/waypoint wiring, and guard Campus Coffee against losing its bridge-aware waypoint count.
+- Renamed the next-ride action from "Map" to "Directions" because the button now promises an actual route, not a generic map search.
+- Ran browser QA across all 36 route pages; every selected-route Directions button resolved to Google Maps directions with bicycling mode and waypoints.

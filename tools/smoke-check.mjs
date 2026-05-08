@@ -86,6 +86,7 @@ check(app.includes("data-unpin-next-ride"), "app exposes a next-open-ride unpin 
 check(app.includes('data-strava-launch aria-label="Start Strava for'), "next ride strip exposes Strava launch");
 check(app.includes("https://www.google.com/maps/dir/"), "built-in map actions open Google Maps directions");
 check(app.includes('travelmode: "bicycling"'), "built-in map actions request bicycling directions");
+check(app.includes("<span>Directions</span>"), "next ride map action is labeled Directions");
 check(!app.includes("?.") && !app.includes("??"), "app avoids optional chaining/nullish coalescing for older mobile browsers");
 
 const sandbox = { window: {}, console };

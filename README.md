@@ -65,9 +65,10 @@ Run the static smoke check before committing app changes:
 
 ```powershell
 node tools/smoke-check.mjs
+node tools/route-audit.mjs
 ```
 
-It verifies the shared mobile-critical DOM hooks, cache-versioned local assets, public share-link fallback, dataset integrity, discovery links, and summer schedule basics.
+These checks verify the shared mobile-critical DOM hooks, cache-versioned local assets, public share-link fallback, dataset integrity, route directions URLs, discovery links, and summer schedule basics.
 
 ## Share It
 
