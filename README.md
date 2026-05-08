@@ -55,6 +55,16 @@ python -m http.server 4173
 
 Then open `http://127.0.0.1:4173/`.
 
+## Quality Check
+
+Run the static smoke check before committing app changes:
+
+```powershell
+node tools/smoke-check.mjs
+```
+
+It verifies the shared mobile-critical DOM hooks, cache-versioned local assets, public share-link fallback, dataset integrity, discovery links, and summer schedule basics.
+
 ## Share It
 
 The `127.0.0.1` URL only works on the computer running the server. It is not a share link.

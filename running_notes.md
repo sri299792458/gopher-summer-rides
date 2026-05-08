@@ -127,3 +127,8 @@ Route geometry is approximate waypoint geometry for planning and visualization, 
 - Sync confidence follow-up: Crew Sync now shows autosave/saving, last-sync time, and auto-check cadence so cross-device edits feel less mysterious.
 - Share-link reliability follow-up: route-plan and sync links now fall back to the public GitHub Pages URL when generated from a local preview.
 - Discovery follow-up: Route library now has search across names, stops, notes, surfaces, and discovery-link titles so hidden gems and custom ideas are easier to find on mobile.
+
+## Reliability guardrail
+
+- Added a local Node smoke check for the fragile public-site basics: versioned local assets, required mobile DOM hooks, public share-link fallback, dataset integrity, official/discovery URLs, and the May 8 / Tue-Thu-Sat / Grand Rounds schedule assumptions.
+- Kept this as tooling/docs only so it does not disturb the currently working mobile UI while still reducing the chance of another silent startup regression.
