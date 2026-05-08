@@ -84,3 +84,10 @@ Route geometry is approximate waypoint geometry for planning and visualization, 
 - Started a mobile-first layout pass: phone flow is planner header, selected route controls, map, then the longer Schedule/Routes/Crew views; desktop restores the left-planner/right-map split.
 - Clarified access model: Sri shares the sync link with Apurv and Ayaan once; Crew Sync is link-based, and the Photos button is only a shortcut to whatever album privacy Google Photos enforces.
 - Fixed the backup ride button so it chooses a different matching route, updates the URL, shows a toast, and scrolls phones to the selected route panel.
+
+## Route context links pass
+
+- User asked for ride pages to include links to blogs, articles, or videos so the routes feel like real Twin Cities exploration instead of just map sketches.
+- Spawned three research agents for Minneapolis/UMN, Saint Paul/east metro, and regional/west/south trails.
+- Added a route-level `learnMore` catalog with curated local-history, ride-preview, official-context, blog, and video links.
+- Kept official trail/status source links separate from the discovery links so closures and authoritative trail pages still have their own lower-friction place in the UI.

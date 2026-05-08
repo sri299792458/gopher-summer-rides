@@ -940,8 +940,443 @@ const routeCaveats = {
   "silverwood-st-anthony": "The path choice across Northeast and St. Anthony matters; pick calmer streets and verify any park/event restrictions.",
 };
 
+const learnMoreCatalog = {
+  campusDinkytown: {
+    title: "Preserving Historic Dinkytown",
+    url: "https://www.preservehistoricdinkytown.org/dinkytown-history",
+    kind: "article",
+  },
+  stoneArchMnopedia: {
+    title: "Stone Arch Bridge history",
+    url: "https://www.mnhs.org/mnopedia/search/index/structure/stone-arch-bridge-minneapolis",
+    kind: "article",
+  },
+  stoneArchNps: {
+    title: "Stone Arch Bridge, Mississippi National River",
+    url: "https://www.nps.gov/miss/planyourvisit/stonarch.htm",
+    kind: "official",
+  },
+  stoneArchAtlas: {
+    title: "Atlas Obscura: Stone Arch Bridge",
+    url: "https://www.atlasobscura.com/places/the-stone-arch-bridge",
+    kind: "article",
+  },
+  boomIslandPark: {
+    title: "Boom Island Park riverfront history",
+    url: "https://www.minneapolisparks.org/parks-destinations/parks-lakes/boom_island_park/",
+    kind: "official",
+  },
+  nicolletIslandVideo: {
+    title: "Finding Minnesota: Nicollet Island's Treasures",
+    url: "https://www.cbsnews.com/minnesota/news/finding-minnesota-nicollet-islands-treasures/",
+    kind: "video",
+  },
+  mississippiGorge: {
+    title: "An endangered river: the Mississippi River Gorge",
+    url: "https://openrivers.lib.umn.edu/article/the-mississippi-river-gorge/",
+    kind: "article",
+  },
+  grandRoundsExplore: {
+    title: "Bike the 51-mile Grand Rounds",
+    url: "https://www.exploreminnesota.com/outdoors/biking/bike-grand-rounds-byway-minneapolis",
+    kind: "article",
+  },
+  grandRoundsWandering: {
+    title: "Biking the Grand Rounds history ride",
+    url: "https://wanderingpine.com/2023/11/14/take-a-ride-through-minneapolis-history-biking-the-grand-rounds-national-scenic-byway/amp/",
+    kind: "blog",
+  },
+  grandRoundsAxios: {
+    title: "Where to bike in Minnesota: 25, 50, or 70 miles",
+    url: "https://www.axios.com/local/twin-cities/2024/07/05/best-minnesota-bike-rides-grand-rounds-gateway-munger-trails",
+    kind: "article",
+  },
+  grandRoundsHistoryPdf: {
+    title: "History of the Grand Rounds",
+    url: "https://minneapolisparks.org/_asset/3dknm3/grand_rounds_history.pdf",
+    kind: "official",
+  },
+  grandRoundsTclf: {
+    title: "Cultural Landscape Foundation: Grand Rounds",
+    url: "https://www.tclf.org/landscapes/grand-rounds",
+    kind: "article",
+  },
+  chainLakesVisit: {
+    title: "Chain of Lakes guide",
+    url: "https://www.minneapolis.org/things-to-do/nature-outdoors/lakes/chain-of-lakes/",
+    kind: "article",
+  },
+  bdeMakaSkaNames: {
+    title: "Names matter: the story of Bde Maka Ska",
+    url: "https://static.lib.umn.edu/publishing/historyapolis/2015/06/27/names-matter-the-story-of-bde-maka-ska/index.html",
+    kind: "article",
+  },
+  lakeLandscapeHistory: {
+    title: "History of the lakes and cultural landscapes",
+    url: "https://minneapolisparks.org/wp-content/uploads/2023/01/Chapter-2-History-of-the-Lakes-and-Their-Cultural-Landscapes.pdf",
+    kind: "official",
+  },
+  midtownRails: {
+    title: "Rails-to-Trails: Midtown Greenway",
+    url: "https://www.railstotrails.org/trailblog/2015/october/16/minnesotas-midtown-greenway",
+    kind: "article",
+  },
+  midtownRailroadHistory: {
+    title: "The railroad trench that became the Greenway",
+    url: "https://streets.mn/2025/05/23/minneapolis-twenty-ninth-street-railroad-depression-part-one/",
+    kind: "article",
+  },
+  midtownStreetfilms: {
+    title: "Streetfilms: Greenway as city connector",
+    url: "https://www.pps.org/article/minneapoliss-midtown-greenway-connects-people-to-their-city-by-bike",
+    kind: "video",
+  },
+  midtownWander: {
+    title: "Urban biking the Midtown Greenway",
+    url: "https://wanderthemap.com/2016/08/urban-biking-midtown-greenway-minneapolis/",
+    kind: "blog",
+  },
+  minnehahaExplore: {
+    title: "How to visit Minnehaha Falls",
+    url: "https://www.exploreminnesota.com/article/how-to-visit-minnehaha-falls",
+    kind: "article",
+  },
+  minnehahaMnopedia: {
+    title: "Minnehaha Falls history",
+    url: "https://www.mnhs.org/mnopedia/search/index/place/minnehaha-falls-minneapolis",
+    kind: "article",
+  },
+  minnehahaRiver: {
+    title: "Minnehaha Falls to the Mississippi",
+    url: "https://mntrips.com/minneapolis-minnehaha-falls-mississippi-river/",
+    kind: "blog",
+  },
+  minnehahaCreekMilling: {
+    title: "Minnehaha Creek's milling history",
+    url: "https://www.minnesotahistory.org/post/the-rise-and-fall-of-minnehaha-creek-s-milling-industry",
+    kind: "blog",
+  },
+  bikeMinneapolis: {
+    title: "2.5 days to wander Minneapolis by bike",
+    url: "https://www.bikabout.com/blog/2-point-5-days-to-wander-by-bike-in-minneapolis",
+    kind: "blog",
+  },
+  witchsHatMnopedia: {
+    title: "Prospect Park Water Tower history",
+    url: "https://www.mnhs.org/mnopedia/search/index/structure/prospect-park-water-tower-minneapolis",
+    kind: "article",
+  },
+  witchsHatNeighborhood: {
+    title: "Prospect Park Witch's Hat Tower",
+    url: "https://prospectparkmpls.org/tower.html",
+    kind: "article",
+  },
+  witchsHatAtlas: {
+    title: "Atlas Obscura: Prospect Park Water Tower",
+    url: "https://www.atlasobscura.com/places/prospect-park-water-tower",
+    kind: "article",
+  },
+  bridalVeilOpenRivers: {
+    title: "Open Rivers: Bridal Veil Falls",
+    url: "https://openrivers.lib.umn.edu/article/bridal-veil-falls/",
+    kind: "article",
+  },
+  demingHeightsHistory: {
+    title: "Lofty ground: Deming Heights",
+    url: "https://minneapolisparkhistory.com/2013/04/29/lofty-words-lofty-ground-portius-c-deming/",
+    kind: "blog",
+  },
+  sheridanFmr: {
+    title: "Sheridan Memorial Park river restoration",
+    url: "https://fmr.org/sheridan-memorial-park",
+    kind: "article",
+  },
+  gracoPark: {
+    title: "Graco Park and Hall's Island",
+    url: "https://www.minneapolisparks.org/parks-destinations/parks-lakes/graco-park/",
+    kind: "official",
+  },
+  bigRiversDakota: {
+    title: "Big Rivers Regional Trail",
+    url: "https://www.co.dakota.mn.us/parks/parksTrails/BigRivers",
+    kind: "official",
+  },
+  bigRiversTwinCities: {
+    title: "Hiking Big Rivers Regional Trail",
+    url: "https://twincitiesoutdoors.com/hike-big-rivers-trail/",
+    kind: "blog",
+  },
+  fortSnellingParksTrails: {
+    title: "Fort Snelling State Park: history and nature",
+    url: "https://parksandtrails.org/state-parks/fort-snelling/",
+    kind: "article",
+  },
+  comoTclf: {
+    title: "Cultural Landscape Foundation: Como Park",
+    url: "https://www.tclf.org/landscapes/como-park",
+    kind: "article",
+  },
+  comoPedBridge: {
+    title: "Historic Como Park ped bridge restored",
+    url: "https://streets.mn/2015/09/12/historic-como-park-ped-bridge-restored/",
+    kind: "blog",
+  },
+  hiddenFallsCrosbyBike: {
+    title: "Biking Crosby Farm",
+    url: "https://twincitiesoutdoors.com/biking-crosby-farm/",
+    kind: "blog",
+  },
+  hiddenFallsStreets: {
+    title: "Hidden Falls, hidden no more",
+    url: "https://streets.mn/2022/08/17/hidden-falls-hidden-no-more/",
+    kind: "blog",
+  },
+  crosbyFmr: {
+    title: "Crosby Farm Regional Park floodplain",
+    url: "https://fmr.org/crosby-farm-regional-park",
+    kind: "article",
+  },
+  hiddenFallsPhotoWalk: {
+    title: "Hidden Falls and Crosby Farm photos",
+    url: "https://paintandhike.com/2025/04/12/hidden-falls-crosby-farm-regional-park-st-paul/",
+    kind: "blog",
+  },
+  lilydaleHarrietFmr: {
+    title: "Special places: Lilydale Park and Harriet Island",
+    url: "https://fmr.org/news/2018/12/31/special-places-lilydale-park-harriet-island",
+    kind: "article",
+  },
+  shepardRoadMinnpost: {
+    title: "The future of St. Paul's riverfront",
+    url: "https://www.minnpost.com/cityscape/2023/06/the-future-of-st-pauls-riverfront-begins-with-shepard-road/",
+    kind: "article",
+  },
+  summitHistory: {
+    title: "Summit Avenue history",
+    url: "https://www.visitsaintpaul.com/blog/summit-avenue-history-the-story-of-saint-pauls-famous-street/",
+    kind: "article",
+  },
+  summitWalkingTour: {
+    title: "Summit Avenue landmark walking tour",
+    url: "https://www.bigboytravel.com/minnesota/stpaul/summit-avenue-walking-tour/",
+    kind: "blog",
+  },
+  summitBikeHistory: {
+    title: "Summit's historic bike lanes",
+    url: "https://streets.mn/2018/06/22/restoring-summit-avenues-historic-bike-lanes/",
+    kind: "article",
+  },
+  swedeHollowTrail: {
+    title: "Swede Hollow and Vento Trail photo ride",
+    url: "https://ronspace.org/2003/Swede_Hollow_Vento_Trail/",
+    kind: "blog",
+  },
+  swedeHollowMinnpost: {
+    title: "Exploring Swede Hollow",
+    url: "https://www.minnpost.com/stroll/2013/05/exploring-swede-hollow-once-neighborhood-carved-out-wild/",
+    kind: "article",
+  },
+  wakanTipiMinnpost: {
+    title: "Bruce Vento Nature Sanctuary and Wakan Tipi",
+    url: "https://www.minnpost.com/community-sketchbook/2019/07/bruce-vento-nature-sanctuary-reversing-harm-adding-history-with-wakan-tipi-center/",
+    kind: "article",
+  },
+  greatRiverPassage: {
+    title: "Saint Paul's Great River Passage",
+    url: "https://106group.com/portfolio/great-river-passage/",
+    kind: "article",
+  },
+  fordPlantVideo: {
+    title: "Made in St. Paul: stories from the Ford Plant",
+    url: "https://www.twincitiesfordplant.com/",
+    kind: "video",
+  },
+  highlandBridgeCity: {
+    title: "Highland Bridge project",
+    url: "https://www.stpaul.gov/departments/planning-and-economic-development/planning/ford-site-highland-bridge/resources",
+    kind: "official",
+  },
+  highlandAia: {
+    title: "Setting the bar for a new neighborhood",
+    url: "https://www.aia.org/article/setting-bar-new-neighborhood",
+    kind: "article",
+  },
+  highlandBridgeMsp: {
+    title: "Highland Bridge by the numbers",
+    url: "https://mspmag.com/arts-and-culture/big-picture-highland-bridge/",
+    kind: "article",
+  },
+  comoHistory: {
+    title: "Como neighborhood history",
+    url: "https://rchs.com/publishing/catalog/ramsey-county-history-vol-19-no-1-1983-swamps-farms-boom-or-bust-como-neighborhoods-colorful-history/",
+    kind: "article",
+  },
+  lakePhalenTrail: {
+    title: "Lake Phalen trail preview",
+    url: "https://www.traillink.com/trail/lake-phalen-trail/",
+    kind: "article",
+  },
+  phalenDragonFestival: {
+    title: "Dragon Festival returns to Lake Phalen",
+    url: "https://sahanjournal.com/arts-culture/dragon-fest-returns-lake-phalen-saint-paul/",
+    kind: "article",
+  },
+  phalenHistory: {
+    title: "Lake Phalen's almost-100 years of history",
+    url: "https://rchs.com/publishing/catalog/ramsey-county-history-winter-1990-the-mystery-of-the-leaking-lake-phalen-park-and-its-almost-100-years-of-history/",
+    kind: "article",
+  },
+  lakeMinnetonkaMsp: {
+    title: "The ultimate Lake Minnetonka bike ride",
+    url: "https://mspmag.com/arts-and-culture/general-interest/the-ultimate-lake-minnetonka-bike-ride/",
+    kind: "article",
+  },
+  lakeMinnetonkaMagazine: {
+    title: "Scenic Twin Cities bike trails near Minnetonka",
+    url: "https://lakeminnetonkamag.com/take-ride-these-scenic-twin-cities-bike-trails-0/",
+    kind: "article",
+  },
+  lakeMinnetonkaBlog: {
+    title: "Biking Lake Minnetonka",
+    url: "https://explorationvacation.net/biking-lake-minnetonka/",
+    kind: "blog",
+  },
+  dakotaRailEriks: {
+    title: "Dakota Rail ride preview",
+    url: "https://www.eriksbikeshop.com/blogs/expert-advice/dakota-rail-regional-trail",
+    kind: "article",
+  },
+  dakotaRailMnTrails: {
+    title: "Minnesota Trails: Dakota Rail",
+    url: "https://mntrails.com/project/dakota-rail-regional-trail/",
+    kind: "article",
+  },
+  gatewayBrownsMnTrails: {
+    title: "Gateway and Brown's Creek trail overview",
+    url: "https://mntrails.com/project/gateway-browns-creek-state-trail/",
+    kind: "article",
+  },
+  stillwaterPairing: {
+    title: "Trail pairings: Stillwater",
+    url: "https://mntrails.com/trail-pairings-stillwater/",
+    kind: "blog",
+  },
+  luceLineEriks: {
+    title: "Luce Line bike trail review",
+    url: "https://www.eriksbikeshop.com/blogs/expert-advice/luce-line-state-trail-in-minnesota-bike-trail-review",
+    kind: "video",
+  },
+  luceLineVirtualTour: {
+    title: "Luce Line snapshot virtual tour",
+    url: "https://www.dnr.state.mn.us/state_trail/virtual_tour/luce_line/snapshot.html",
+    kind: "official",
+  },
+  nineMileThreeRivers: {
+    title: "Nine Mile Creek official trail guide",
+    url: "https://www.threeriversparks.org/location/nine-mile-creek-regional-trail",
+    kind: "official",
+  },
+  nineMileTrailLink: {
+    title: "Nine Mile Creek trail preview",
+    url: "https://www.traillink.com/trail/nine-mile-creek-regional-trail/",
+    kind: "article",
+  },
+  nineMileMissingLink: {
+    title: "Nine Mile Creek to Hyland missing link",
+    url: "https://streets.mn/2024/07/03/the-missing-link-between-nine-mile-creek-trail-and-hyland-lake-park-reserve/",
+    kind: "article",
+  },
+  nineMileFamily: {
+    title: "Nine Mile Creek stops and boardwalks",
+    url: "https://www.familyfuntwincities.com/locations/nine-mile-creek-regional-trail/",
+    kind: "article",
+  },
+  nokomisMinnesotaTrail: {
+    title: "Nokomis-Minnesota River trail guide",
+    url: "https://www.traillink.com/trail/nokomis-minnesota-river-regional-trail/",
+    kind: "article",
+  },
+  rushCreekThreeRivers: {
+    title: "Rush Creek Regional Trail guide",
+    url: "https://www.threeriversparks.org/location/rush-creek-regional-trail",
+    kind: "official",
+  },
+  lebanonBiking: {
+    title: "Biking in Lebanon Hills",
+    url: "https://twincitiesoutdoors.com/biking-lebanon-hills/",
+    kind: "blog",
+  },
+  cedarKenilworthAxios: {
+    title: "Cedar and Kenilworth trails reopen",
+    url: "https://www.axios.com/local/twin-cities/2026/03/25/kenilworth-cedar-bike-trails-re-open",
+    kind: "article",
+  },
+  webberPark: {
+    title: "Webber Park and Shingle Creek history",
+    url: "https://www.minneapolisparks.org/parks-destinations/parks-lakes/webber_park/",
+    kind: "official",
+  },
+  silverwoodOutdoor: {
+    title: "Silverwood Park loop",
+    url: "https://www.outdoorproject.com/united-states/minnesota/silverwood-park-loop",
+    kind: "article",
+  },
+  silverwoodTpt: {
+    title: "Art and nature collide at Silverwood Park",
+    url: "https://www.tptoriginals.org/art-and-nature-collide-at-silverwood-park/",
+    kind: "article",
+  },
+  silverwoodSpring: {
+    title: "A spring visit to Silverwood Park",
+    url: "https://twincitiesoutdoors.com/spring-hike-silverwood-park/",
+    kind: "blog",
+  },
+};
+
+const routeLearnMoreKeys = {
+  "stone-arch-boom": ["stoneArchMnopedia", "boomIslandPark", "stoneArchAtlas"],
+  "river-roads": ["mississippiGorge", "grandRoundsTclf", "stoneArchNps"],
+  "grand-rounds-sampler": ["grandRoundsWandering", "grandRoundsExplore", "grandRoundsHistoryPdf"],
+  "full-grand-rounds": ["grandRoundsWandering", "grandRoundsAxios", "grandRoundsHistoryPdf"],
+  "chain-lakes": ["bdeMakaSkaNames", "chainLakesVisit", "lakeLandscapeHistory"],
+  "midtown-greenway": ["midtownRailroadHistory", "midtownRails", "midtownStreetfilms"],
+  "minnehaha-falls": ["minnehahaMnopedia", "minnehahaExplore", "minnehahaRiver"],
+  "minnehaha-creek": ["minnehahaCreekMilling", "grandRoundsExplore", "minnehahaRiver"],
+  "fort-snelling-big-rivers": ["bigRiversTwinCities", "fortSnellingParksTrails", "bigRiversDakota"],
+  "como-lake": ["comoTclf", "comoPedBridge", "comoHistory"],
+  "st-paul-riverfront": ["lilydaleHarrietFmr", "shepardRoadMinnpost", "greatRiverPassage"],
+  "gateway-stillwater": ["gatewayBrownsMnTrails", "stillwaterPairing", "brownsCreek"],
+  "cedar-kenilworth": ["lakeLandscapeHistory", "cedarKenilworthAxios", "chainLakesVisit"],
+  "lake-minnetonka": ["lakeMinnetonkaMsp", "lakeMinnetonkaMagazine", "lakeMinnetonkaBlog"],
+  "luce-line-east": ["luceLineEriks", "luceLineVirtualTour", "luceLine"],
+  "luce-line-long": ["luceLineEriks", "luceLineVirtualTour", "luceLine"],
+  "nokomis-river": ["nokomisMinnesotaTrail", "grandRoundsExplore", "minnehahaExplore"],
+  "nine-mile-creek": ["nineMileThreeRivers", "nineMileMissingLink", "nineMileFamily"],
+  "elm-rush-creek": ["rushCreekThreeRivers", "rushCreek"],
+  "browns-creek": ["gatewayBrownsMnTrails", "stillwaterPairing", "brownsCreek"],
+  "dakota-rail": ["dakotaRailEriks", "lakeMinnetonkaMagazine", "dakotaRailMnTrails"],
+  "lebanon-hills": ["lebanonBiking", "lebanonHills"],
+  "campus-coffee": ["campusDinkytown", "bikeMinneapolis", "grandRoundsExplore"],
+  "nicollet-island-lighthouse": ["nicolletIslandVideo", "boomIslandPark", "stoneArchMnopedia"],
+  "sheridan-graco-riverfront": ["sheridanFmr", "gracoPark", "greatRiverPassage"],
+  "witchs-hat-prospect-park": ["witchsHatMnopedia", "witchsHatNeighborhood", "witchsHatAtlas"],
+  "bridal-veil-franklin-gorge": ["bridalVeilOpenRivers", "mississippiGorge", "stoneArchNps"],
+  "deming-heights-st-anthony": ["demingHeightsHistory", "grandRoundsTclf", "grandRoundsExplore"],
+  "hidden-falls-crosby": ["hiddenFallsStreets", "crosbyFmr", "hiddenFallsCrosbyBike"],
+  "ford-highland-bridge": ["fordPlantVideo", "highlandAia", "highlandBridgeCity"],
+  "summit-cathedral-loop": ["summitHistory", "summitWalkingTour", "summitBikeHistory"],
+  "capital-city-harriet-island": ["lilydaleHarrietFmr", "shepardRoadMinnpost", "capitalCityBikeway"],
+  "bruce-vento-swede-hollow": ["swedeHollowMinnpost", "wakanTipiMinnpost", "gatewayBrownsMnTrails"],
+  "lake-phalen-eastside": ["phalenDragonFestival", "phalenHistory", "lakePhalenTrail"],
+  "north-mississippi-webber": ["webberPark", "grandRoundsTclf", "bikeMinneapolis"],
+  "silverwood-st-anthony": ["silverwoodTpt", "silverwoodOutdoor", "silverwoodSpring"],
+};
+
 routes.forEach((route) => {
   route.sourceKeys = routeSourceKeys[route.id] || ["openStreetMap"];
+  route.learnMore = (routeLearnMoreKeys[route.id] || [])
+    .map((key) => learnMoreCatalog[key] || sources[key])
+    .filter(Boolean);
   route.caveat = routeCaveats[route.id] || "";
   route.distanceMethod = "Approximate planned ride distance";
   route.geometrySource = "Approximate waypoint sketch over OpenStreetMap basemap";

@@ -32,6 +32,7 @@ Primary sources include Minneapolis Park and Recreation Board, Three Rivers Park
 - Shared crew sync link for names, settings, RSVPs, completed rides, route queue, and ride overrides.
 - Optional private Photos album link saved in crew settings instead of hard-coded into the public site.
 - `.ics` calendar export for the full summer plan.
+- Route-specific learn-more links for local history, ride previews, blogs, articles, and videos.
 - Official status/source links and route caveats.
 
 ## Run Locally

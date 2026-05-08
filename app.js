@@ -879,6 +879,29 @@ function escapeHtml(value) {
     .replace(/'/g, "&#39;");
 }
 
+function learnMoreKindLabel(kind) {
+  const labels = {
+    article: "Article",
+    blog: "Blog",
+    official: "Official",
+    video: "Video",
+  };
+  return labels[kind] || "Read";
+}
+
+function renderLearnMoreLink(link) {
+  const title = escapeHtml(link.title || link.label || "Learn more");
+  const url = escapeHtml(link.url);
+  const kind = escapeHtml(learnMoreKindLabel(link.kind));
+  return `
+    <a href="${url}" target="_blank" rel="noopener noreferrer">
+      <span>${kind}</span>
+      <strong>${title}</strong>
+      <i data-lucide="external-link"></i>
+    </a>
+  `;
+}
+
 function buildCalendarIcs() {
   const events = schedule.flatMap((week) =>
     week.slots.map((slot) => {
@@ -1076,6 +1099,7 @@ function renderSelectedRoute() {
   const routeSources = (route.sourceKeys || [])
     .map((key) => sources[key])
     .filter(Boolean);
+  const learnMoreLinks = (route.learnMore || []).filter((link) => link?.url);
   const caveat = route.caveat ? `<p class="route-caveat">${route.caveat}</p>` : "";
   selectedTitle.textContent = route.name;
   selectedVibe.textContent = route.vibe;
@@ -1155,8 +1179,20 @@ function renderSelectedRoute() {
             : ""
         }
       </div>
+      ${
+        learnMoreLinks.length
+          ? `<div class="learn-more-links">
+              <p class="eyebrow">Learn more</p>
+              <div class="learn-more-list">
+                ${learnMoreLinks.map(renderLearnMoreLink).join("")}
+              </div>
+            </div>`
+          : ""
+      }
       <div class="source-links">
-        ${routeSources.map((source) => `<a href="${source.url}" target="_blank" rel="noopener noreferrer">${source.label}</a>`).join("")}
+        ${routeSources
+          .map((source) => `<a href="${escapeHtml(source.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(source.label)}</a>`)
+          .join("")}
       </div>
     </div>
   `;

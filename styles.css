@@ -797,6 +797,67 @@ h3 {
   gap: 6px;
 }
 
+.learn-more-links {
+  margin-bottom: 12px;
+}
+
+.learn-more-links .eyebrow {
+  margin-bottom: 7px;
+}
+
+.learn-more-list {
+  display: grid;
+  gap: 8px;
+}
+
+.learn-more-list a {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  background: var(--white);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.learn-more-list a:hover {
+  border-color: rgba(47, 128, 160, 0.38);
+  background: #f5fbfd;
+}
+
+.learn-more-list span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  border-radius: 999px;
+  padding: 0 7px;
+  background: #eef7fb;
+  color: var(--river);
+  font-size: 0.63rem;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.learn-more-list strong {
+  min-width: 0;
+  color: var(--ink);
+  font-size: 0.84rem;
+  font-weight: 820;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.learn-more-list svg {
+  width: 16px;
+  height: 16px;
+  color: var(--river);
+}
+
 .action-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
