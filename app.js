@@ -1268,6 +1268,7 @@ function renderRoutes() {
             <span>${route.minutes} min</span>
             <span class="badge">${escapeHtml(route.vibe)}</span>
             ${route.custom ? '<span class="badge badge-custom">custom</span>' : ""}
+            ${route.id === state.selectedRouteId ? '<span class="badge badge-selected">selected</span>' : ""}
           </p>
           <p class="route-note">${escapeHtml(route.note)}</p>
         </button>
